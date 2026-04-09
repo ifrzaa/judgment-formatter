@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Judgment Formatter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">⚖</div>
+  <h1>Judgment <span>Formatter</span></h1>
+</header>
+
+<main>
+  <div class="toolbar">
+    <span class="toolbar-label">Actions</span>
+
+    <button class="btn btn-primary" id="formatBtn" onclick="formatDocument()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+      Format Document
+    </button>
+
+    <div class="toolbar-sep"></div>
+
+    <button class="btn btn-ghost" onclick="copyOutput()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      Copy Output
+    </button>
+
+    <button class="btn btn-ghost" onclick="loadSample()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Load Sample
+    </button>
+
+    <div class="toolbar-sep"></div>
+
+    <button class="btn btn-ghost" onclick="toggleRules()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Rules
+    </button>
+
+    <button class="btn btn-danger" onclick="clearAll()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      Clear
+    </button>
+
+    <div class="status-pill">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Ready</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--overlay1)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <span class="panel-title">Input — Original HTML</span>
+      <span class="panel-count" id="inputCount">0 chars</span>
+    </div>
+    <div class="panel-body">
+      <textarea id="inputText"
+        placeholder="Paste your judgment HTML here...&#10;&#10;Supported formats:&#10;• <p>GROUNDS OF DECISION</p>&#10;• <p>1. Paragraph text...</p>&#10;• <p>[3]Paragraph text...</p>&#10;&#10;Or click 'Load Sample' to see an example."
+        oninput="updateCount()"
+        ondragover="handleDragOver(event)"
+        ondragleave="handleDragLeave(event)"
+        ondrop="handleDrop(event)"
+      ></textarea>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--overlay1)" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span class="panel-title">Output — Formatted HTML</span>
+      <span class="panel-count" id="outputCount">0 chars</span>
+    </div>
+    <div class="panel-body" id="outputBody">
+      <div class="empty-state" id="emptyState">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
+        <p>Formatted output will appear here after you click <em>Format Document</em></p>
+      </div>
+      <div id="skeletonLoader" style="display:none" class="skeleton-wrap">
+        <div class="skeleton-line" style="width:45%"></div>
+        <div class="skeleton-line" style="width:90%"></div>
+        <div class="skeleton-line" style="width:85%"></div>
+        <div class="skeleton-line" style="width:60%"></div>
+        <div class="skeleton-line" style="width:92%"></div>
+        <div class="skeleton-line" style="width:78%"></div>
+        <div class="skeleton-line" style="width:88%"></div>
+        <div class="skeleton-line" style="width:40%"></div>
+        <div class="skeleton-line" style="width:96%"></div>
+        <div class="skeleton-line" style="width:70%"></div>
+      </div>
+      <pre class="output-area" id="outputText" style="display:none"></pre>
+    </div>
+  </div>
+</main>
+
+<div class="rules-drawer" id="rulesDrawer">
+  <h2>Formatting Rules <button class="close-btn" onclick="toggleRules()">✕</button></h2>
+
+  <div class="rule-item">
+    <h3>Rule 1 · Main Title</h3>
+    <p>The first title is replaced with <code>&lt;p&gt;&lt;b&gt;JUDGMENT&lt;/b&gt;&lt;/p&gt;</code> — bold, all caps.</p>
+  </div>
+
+  <div class="rule-item">
+    <h3>Rule 2 · Paragraph Numbering</h3>
+    <p>Main paragraph numbers like <code>1.</code> or <code>[3]</code> become <code>&lt;b&gt;[N]&lt;/b&gt;</code> with exactly one space before the text. Does not apply inside blockquotes.</p>
+  </div>
+
+  <div class="rule-item">
+    <h3>Rule 3 · Section Headings</h3>
+    <p>Standalone headings (e.g. <em>Brief Factual Background</em>) are wrapped in <code>&lt;b&gt;...&lt;/b&gt;</code> with Title Case. Not applied inside blockquotes.</p>
+  </div>
+
+  <div class="rule-item">
+    <h3>Rule 4 · Blockquotes</h3>
+    <p>When a paragraph ends with <code>:</code>, <code>-</code>, or <code>:-</code>, subsequent paragraphs are wrapped in <code>&lt;blockquote&gt;</code> until a new main paragraph begins.</p>
+  </div>
+
+  <div class="rule-item">
+    <h3>Rule 5 · List Spacing</h3>
+    <p>Numbered/lettered list markers like <code>(i)Word</code> become <code>(i) Word</code> — exactly one space. No bolding of inner markers.</p>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">✓</span>
+  <span id="toastMsg">Copied to clipboard!</span>
+</div>
+
+<script>
+// ── Sample text (first few paragraphs from original) ──
+const SAMPLE = `<p>GROUNDS OF DECISION</p>
+
+<p>1. This is an appeal by the Appellant/Defendant against that part of the decision of the learned Sessions Court Judge dated 1.10.2021 that disallowed the Appellant's application under o.18 r.19(1)(d) and</p>
+<p>o.92 r.4 ROC 2012 to strike out the Respondent's Writ and Statement of Claim or part thereof on the ground that the commencement of the instant Suit by the Respondent in the Sessions Court is an abuse of process of the Court.</p>
+
+<p>2.As this is an appeal against the decision of the Sessions Court, pursuant to s.29 of the Courts of Judicature Act 1964, the appeal herein shall be by way of re-hearing.</p>
+
+<p>Brief Factual Background</p>
+
+<p>[3]The Respondent was engaged by the Appellant pursuant to a contract dated 1st October 2017 as a Group Corporate and Admin Manager via a Contract of Employment dated 1st October 2017 (see exhibit "PC-4" in pages 149 to 154 of the record of appeal – hereinafter referred to as the 2017 Contract).</p>
+
+<p>[4] Clause 1 of the said 2017 Contract provides that the Respondent's employment duration was for 2 years commencing 1st October 2017 extendable for another 2 years on mutual agreement. Clause 1 read as follows :-</p>
+
+<p>"The duration of this Employment Contract shall be two (2) year commencing 1st October 2017, extendable for another</p>
+
+<p>two (2) years on mutual agreement. The company shall write to you two months prior to the end of the two years contract for the purpose and intent of further extension of employment".</p>
+
+<p>5.On the 17th July 2019, via an email, the Appellant wrote to the Respondent for the purpose and intent of further extension.</p>`;
+
+// ── State ──
+let outputContent = '';
+
+// ── Helpers ──
+function updateCount() {
+  const val = document.getElementById('inputText').value;
+  document.getElementById('inputCount').textContent = val.length.toLocaleString() + ' chars';
+}
+
+function setStatus(state, text) {
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+  dot.className = 'status-dot ' + (state || '');
+  txt.textContent = text;
+}
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  const icon = document.getElementById('toastIcon');
+  const msgEl = document.getElementById('toastMsg');
+  icon.textContent = type === 'error' ? '✕' : '✓';
+  msgEl.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => { t.className = 'toast'; }, 3000);
+}
+
+function toggleRules() {
+  document.getElementById('rulesDrawer').classList.toggle('open');
+}
+
+function clearAll() {
+  document.getElementById('inputText').value = '';
+  document.getElementById('outputText').textContent = '';
+  document.getElementById('outputText').style.display = 'none';
+  document.getElementById('emptyState').style.display = '';
+  document.getElementById('skeletonLoader').style.display = 'none';
+  document.getElementById('outputCount').textContent = '0 chars';
+  updateCount();
+  outputContent = '';
+  setStatus('', 'Ready');
+}
+
+function loadSample() {
+  document.getElementById('inputText').value = SAMPLE;
+  updateCount();
+  showToast('Sample document loaded');
+}
+
+function copyOutput() {
+  if (!outputContent) { showToast('Nothing to copy yet', 'error'); return; }
+  navigator.clipboard.writeText(outputContent).then(() => showToast('Output copied to clipboard!'));
+}
+
+// ── Drag & Drop ──
+function handleDragOver(e) {
+  e.preventDefault();
+  e.target.classList.add('drag-over');
+}
+function handleDragLeave(e) {
+  e.target.classList.remove('drag-over');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  e.target.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    document.getElementById('inputText').value = ev.target.result;
+    updateCount();
+    showToast('File loaded: ' + file.name);
+  };
+  reader.readAsText(file);
+}
+
+// ── Format via Regex and State Tracking ──
+function formatDocument() {
+  const input = document.getElementById('inputText').value.trim();
+  if (!input) { showToast('Please paste some HTML first', 'error'); return; }
+
+  const btn = document.getElementById('formatBtn');
+  btn.disabled = true;
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('outputText').style.display = 'none';
+  document.getElementById('skeletonLoader').style.display = 'block';
+  setStatus('processing', 'Formatting locally…');
+
+  setTimeout(() => {
+    try {
+      const formattedHtml = processHtmlRules(input);
+      
+      outputContent = formattedHtml;
+      const outEl = document.getElementById('outputText');
+      outEl.textContent = formattedHtml;
+      outEl.style.display = 'block';
+      document.getElementById('outputCount').textContent = formattedHtml.length.toLocaleString() + ' chars';
+      
+      setStatus('done', 'Formatted successfully');
+      showToast('Document formatted instantly!');
+    } catch (err) {
+      setStatus('error', 'Error');
+      document.getElementById('emptyState').style.display = '';
+      showToast('Error: ' + err.message, 'error');
+      console.error(err);
+    } finally {
+      document.getElementById('skeletonLoader').style.display = 'none';
+      btn.disabled = false;
+    }
+  }, 100);
+}
+
+function mergeBrokenParagraphs(paragraphs) {
+  const merged = [];
+  const isListMarker = (str) => /^(\(?[a-z0-9]+\)|[a-z0-9]+\.)/i.test(str.trim());
+  
+  for (let i = 0; i < paragraphs.length; i++) {
+    let currentP = paragraphs[i];
+    let currentText = currentP.textContent.trim();
+
+    while (i + 1 < paragraphs.length) {
+      let nextP = paragraphs[i + 1];
+      let nextText = nextP.textContent.trim();
+
+      if (isListMarker(nextText)) break;
+
+      const endsFragile = /[a-z0-9,\/]\s*$/i.test(currentText) && !/[.!?:]\s*$/.test(currentText);
+      const startsWeak = /^[a-z]/.test(nextText);
+
+      if (endsFragile && startsWeak) {
+        const joiner = currentText.endsWith('/') ? '' : ' ';
+        currentP.innerHTML = currentP.innerHTML.trim() + joiner + nextP.innerHTML.trim();
+        currentText = currentP.textContent.trim();
+        i++; 
+      } else {
+        break; 
+      }
+    }
+    merged.push(currentP);
+  }
+  return merged;
+}
+
+// ── NEW PRE-PASS: Longest Increasing Subsequence to isolate True Main Sequences ──
+function identifyMainSequence(paragraphs) {
+  const seqIndices = new Set();
+  const candidates = [];
+  
+  for (let i = 0; i < paragraphs.length; i++) {
+    const text = paragraphs[i].textContent.trim();
+    const match = text.match(/^\[?(\d+)\]?\.?\s*([\s\S]*)$/);
+    
+    // Ignore list items that look like "1.1" or "23.5"
+    if (match && !/^\d+\.\d+/.test(text.split(/\s+/)[0])) {
+      candidates.push({ index: i, val: parseInt(match[1], 10) });
+    }
+  }
+
+  if (candidates.length === 0) return seqIndices;
+
+  // LIS algorithm with logic tailored for legal documents
+  let dp = new Array(candidates.length).fill(1);
+  let prev = new Array(candidates.length).fill(-1);
+
+  for (let i = 1; i < candidates.length; i++) {
+    for (let j = 0; j < i; j++) {
+      let diff = candidates[i].val - candidates[j].val;
+      // Sequence must increase, allowing for reasonably skipped numbers up to 50
+      if (diff > 0 && diff <= 50) { 
+        // FIX IMPLEMENTED HERE: Changed > to >=
+        // Using >= ensures that in a numbering collision (e.g., two "23"s),
+        // the algorithm prefers the most recent valid sequence item, preventing it 
+        // from prematurely mapping quoted numbers.
+        if (dp[j] + 1 >= dp[i]) {
+          dp[i] = dp[j] + 1;
+          prev[i] = j;
+        }
+      }
+    }
+  }
+
+  let maxLen = 0;
+  let maxIdx = -1;
+  for (let i = 0; i < candidates.length; i++) {
+    // Uses >= to ensure the furthest reaching main sequence is preferred
+    if (dp[i] >= maxLen) { 
+      maxLen = dp[i];
+      maxIdx = i;
+    }
+  }
+
+  let curr = maxIdx;
+  while (curr !== -1) {
+    seqIndices.add(candidates[curr].index);
+    curr = prev[curr];
+  }
+
+  return seqIndices;
+}
+
+// ── The Formatting Engine ──
+function processHtmlRules(rawHtml) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(rawHtml, 'text/html');
+  const rawParagraphs = Array.from(doc.body.querySelectorAll('p'))
+    .filter(p => p.textContent.trim().length > 0); 
+    
+  const paragraphs = mergeBrokenParagraphs(rawParagraphs);
+  if (paragraphs.length === 0) return rawHtml;
+
+  // Execute the pre-pass to find only the True Main Sequence numbers
+  const trueMainIndices = identifyMainSequence(paragraphs);
+
+  const outputLines = [];
+  let isFirst = true;
+  let bqDepth = 0;
+
+  // Matches ':', '-', ':-', '—' (em-dash), or '–' (en-dash)
+  const isTrigger = (str) => /[:\-\u2013\u2014]\s*$/.test(str.trim()); 
+  
+  const isSubListItem = (str) => {
+    return /^(\(?[a-zA-Z0-9]{1,4}\)|[a-zA-Z0-9]{1,4}\.|\[\d+\])(?=\s|[A-Za-z0-9"'])/i.test(str.trim());
+  };
+
+  const isHeading = (str, isMainNumLine) => {
+    if (isMainNumLine) return false;
+    const wordCount = str.trim().split(/\s+/).length;
+    return wordCount > 0 && 
+           wordCount <= 5 && 
+           !/[.:,\-!?\;]$/.test(str.trim()) && 
+           !isSubListItem(str) && 
+           /^[A-Za-z]/.test(str.trim());
+  };
+
+  const isCitationReturn = (str) => {
+    return /^See also\b/i.test(str.trim());
+  };
+  
+  const toTitleCase = (str) => str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+
+  // -- MAIN LOOP --
+  for (let i = 0; i < paragraphs.length; i++) {
+    const p = paragraphs[i];
+    const text = p.textContent.trim(); 
+    if (!text) continue;
+
+    // Rule 1: Master Title
+    if (isFirst) {
+      outputLines.push('<p><b>JUDGMENT</b></p>');
+      isFirst = false;
+      continue;
+    }
+
+    const isMainNum = trueMainIndices.has(i);
+    const numMatch = isMainNum ? text.match(/^\[?(\d+)\]?\.?\s*([\s\S]*)$/) : null;
+    let parsedNum = numMatch ? { num: numMatch[1], text: numMatch[2] } : null;
+
+    let headingMatch = isHeading(text, isMainNum);
+    const subListMatch = isSubListItem(text);
+    const citationReturnMatch = isCitationReturn(text);
+
+    // Rule 3 Enforcement: Headings do NOT apply inside blockquotes
+    if (bqDepth > 0) {
+        headingMatch = false; 
+    }
+
+    // --- ESCAPE CLAUSES ---
+    if (isMainNum || headingMatch || citationReturnMatch) {
+      while (bqDepth > 0) {
+        bqDepth--;
+        outputLines.push('  '.repeat(bqDepth) + '</blockquote>');
+      }
+    } 
+    else if (subListMatch && bqDepth > 1) {
+      while (bqDepth > 1) {
+        bqDepth--;
+        outputLines.push('  '.repeat(bqDepth) + '</blockquote>');
+      }
+    }
+
+    // --- FORMAT CURRENT PARAGRAPH ---
+    const indent = '  '.repeat(bqDepth);
+    
+    if (bqDepth === 0) {
+      if (isMainNum && parsedNum) {
+          outputLines.push(`${indent}<p><b>[${parsedNum.num}]</b> ${parsedNum.text.replace(/\u2014/g, '&#151;')}</p>`);
+      } else if (headingMatch) {
+          outputLines.push(`${indent}<p><b>${toTitleCase(text)}</b></p>`);
+      } else {
+          let content = p.innerHTML.trim().replace(/\u2014/g, '&#151;');
+          outputLines.push(`${indent}<p>${content}</p>`); 
+      }
+    } else {
+      // Inside a blockquote: leave numbers as they are, fix list spacing
+      let fixedHtml = p.innerHTML.trim()
+          .replace(/^(\(?[a-zA-Z0-9]+\)|[a-zA-Z0-9]+\.)(?=[^\s<])/i, '$1 ')
+          .replace(/\u2014/g, '&#151;'); 
+      outputLines.push(`${indent}<p>${fixedHtml}</p>`);
+    }
+
+    // --- TRIGGER CLAUSE ---
+    if (isTrigger(text)) {
+        outputLines.push('  '.repeat(bqDepth) + '<blockquote>');
+        bqDepth++;
+    }
+  }
+
+  // Close any lingering blockquotes
+  while (bqDepth > 0) {
+    bqDepth--;
+    outputLines.push('  '.repeat(bqDepth) + '</blockquote>');
+  }
+
+  return outputLines.join('\n\n');
+}
+
+// Init
+updateCount();
+</script>
+</body>
+</html>
