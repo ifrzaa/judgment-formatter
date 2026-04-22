@@ -109,7 +109,7 @@
 
   <div class="rule-item">
     <h3>Rule 2 · Paragraph Numbering</h3>
-    <p>Main paragraph numbers like <code>1.</code>, <code>1 .</code>, <code>[3]</code>, or <code>[ 3 ]</code> become <code>&lt;b&gt;[N]&lt;/b&gt;</code> with exactly one space before the text. Does not apply inside blockquotes.</p>
+    <p>Main paragraph numbers like <code>1.</code> or <code>[3]</code> become <code>&lt;b&gt;[N]&lt;/b&gt;</code> with exactly one space before the text. Does not apply inside blockquotes.</p>
   </div>
 
   <div class="rule-item">
@@ -125,26 +125,6 @@
   <div class="rule-item">
     <h3>Rule 5 · List Spacing</h3>
     <p>Numbered/lettered list markers like <code>(i)Word</code> become <code>(i) Word</code> — exactly one space. No bolding of inner markers.</p>
-  </div>
-
-  <div class="rule-item">
-    <h3>Rule 6 · Title Recognition</h3>
-    <p>If the first paragraph is <code>AWARD</code> or <code>Award</code>, it becomes <code>&lt;p&gt;&lt;b&gt;AWARD&lt;/b&gt;&lt;/p&gt;</code>. If it is <code>ALASAN PENGHAKIMAN</code>, that exact title is used bold instead.</p>
-  </div>
-
-  <div class="rule-item">
-    <h3>Rule 7 · Paragraph Number Formats</h3>
-    <p>All variants are normalised to <code>&lt;b&gt;[N]&lt;/b&gt;</code>: <code>1. text</code>, <code>1 . text</code>, <code>[1] text</code>, and <code>[ 1 ] text</code> are all recognised.</p>
-  </div>
-
-  <div class="rule-item">
-    <h3>Rule 8 · Reference Block</h3>
-    <p>A <code>REFERENCE:</code> section found before the title is automatically moved to appear immediately after the title, rendered as <code>&lt;p&gt;&lt;b&gt;Reference: &lt;/b&gt;&lt;/p&gt;</code> followed by its body paragraph.</p>
-  </div>
-
-  <div class="rule-item">
-    <h3>Rule 9 · Emphasis Added</h3>
-    <p>Any occurrence of <code>(emphasis added)</code>, <code>[emphasis added]</code>, or <code>[Emphasis added]</code> (any casing) is normalised to <code>[Emphasis Added]</code>.</p>
   </div>
 </div>
 
@@ -323,7 +303,7 @@ function identifyMainSequence(paragraphs) {
   
   for (let i = 0; i < paragraphs.length; i++) {
     const text = paragraphs[i].textContent.trim();
-    const match = text.match(/^\[\s*(\d+)\s*\]\.?\s*([\s\S]*)$/) || text.match(/^(\d+)\s*\.\s+([\s\S]*)$/);
+    const match = text.match(/^\[?(\d+)\]?\.?\s*([\s\S]*)$/);
     
     // Ignore list items that look like "1.1" or "23.5"
     if (match && !/^\d+\.\d+/.test(text.split(/\s+/)[0])) {
@@ -383,57 +363,6 @@ function processHtmlRules(rawHtml) {
   const paragraphs = mergeBrokenParagraphs(rawParagraphs);
   if (paragraphs.length === 0) return rawHtml;
 
-  // ── PRE-PASS: Reorder REFERENCE block to appear after the first title (AWARD/ALASAN PENGHAKIMAN) ──
-  // If input has: <p>REFERENCE:</p> ... <p>AWARD</p> OR <p>AWARD</p> is first title,
-  // move REFERENCE block (label + body) to immediately after the title paragraph.
-  (function reorderReference() {
-    // Find the REFERENCE paragraph
-    const refIdx = paragraphs.findIndex(p => /^REFERENCE\s*:?\s*$/i.test(p.textContent.trim()));
-    if (refIdx === -1) return;
-
-    // Find a paragraph whose text is exactly AWARD or ALASAN PENGHAKIMAN (the title paragraph)
-    const titleIdx = paragraphs.findIndex(p => {
-      const t = p.textContent.trim().toUpperCase();
-      return t === 'AWARD' || t === 'ALASAN PENGHAKIMAN';
-    });
-    if (titleIdx === -1) return;
-
-    // The reference body is the paragraph(s) immediately after refIdx that don't look like a numbered para or title
-    // Collect: the REFERENCE label paragraph + all following non-numbered, non-title body paragraphs
-    let refEnd = refIdx + 1;
-    while (refEnd < paragraphs.length) {
-      const t = paragraphs[refEnd].textContent.trim();
-      // Stop if we hit the AWARD title or a numbered paragraph
-      if (/^(AWARD|ALASAN PENGHAKIMAN)$/i.test(t)) break;
-      if (/^\[\s*\d+\s*\]/.test(t) || /^\d+\s*\./.test(t)) break;
-      refEnd++;
-    }
-
-    // Extract the ref block
-    const refBlock = paragraphs.splice(refIdx, refEnd - refIdx);
-
-    // Re-find title index (may have shifted after splice)
-    const newTitleIdx = paragraphs.findIndex(p => {
-      const t = p.textContent.trim().toUpperCase();
-      return t === 'AWARD' || t === 'ALASAN PENGHAKIMAN';
-    });
-    if (newTitleIdx === -1) {
-      // Put it back if title not found
-      paragraphs.splice(refIdx, 0, ...refBlock);
-      return;
-    }
-
-    // Insert ref block immediately after the title
-    paragraphs.splice(newTitleIdx + 1, 0, ...refBlock);
-  })();
-
-  // ── PRE-PASS: Normalize [Emphasis Added] variants ──
-  paragraphs.forEach(p => {
-    p.innerHTML = p.innerHTML
-      .replace(/\(\s*emphasis\s+added\s*\)/gi, '[Emphasis Added]')
-      .replace(/\[\s*emphasis\s+added\s*\]/gi, '[Emphasis Added]');
-  });
-
   // Execute the pre-pass to find only the True Main Sequence numbers
   const trueMainIndices = identifyMainSequence(paragraphs);
 
@@ -472,27 +401,13 @@ function processHtmlRules(rawHtml) {
 
     // Rule 1: Master Title
     if (isFirst) {
-      const upperText = text.toUpperCase().trim();
-      if (upperText === 'AWARD') {
-        outputLines.push('<p><b>AWARD</b></p>');
-      } else if (upperText === 'ALASAN PENGHAKIMAN') {
-        outputLines.push('<p><b>ALASAN PENGHAKIMAN</b></p>');
-      } else {
-        outputLines.push('<p><b>JUDGMENT</b></p>');
-      }
+      outputLines.push('<p><b>JUDGMENT</b></p>');
       isFirst = false;
       continue;
     }
 
-    // Rule: REFERENCE label → bold title (placed after the award title by pre-pass)
-    if (/^REFERENCE\s*:?\s*$/i.test(text)) {
-      while (bqDepth > 0) { bqDepth--; outputLines.push('  '.repeat(bqDepth) + '</blockquote>'); }
-      outputLines.push('<p><b>Reference: </b></p>');
-      continue;
-    }
-
     const isMainNum = trueMainIndices.has(i);
-    const numMatch = isMainNum ? (text.match(/^\[\s*(\d+)\s*\]\.?\s*([\s\S]*)$/) || text.match(/^(\d+)\s*\.\s+([\s\S]*)$/)) : null;
+    const numMatch = isMainNum ? text.match(/^\[?(\d+)\]?\.?\s*([\s\S]*)$/) : null;
     let parsedNum = numMatch ? { num: numMatch[1], text: numMatch[2] } : null;
 
     let headingMatch = isHeading(text, isMainNum);
