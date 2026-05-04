@@ -143,6 +143,21 @@
     cursor: not-allowed;
   }
 
+  .btn-secondary {
+    background: var(--teal);
+    color: var(--crust);
+    font-weight: 500;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--sky);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(148,226,213,0.3);
+  }
+  .btn-secondary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
   .btn-ghost {
     background: transparent;
     color: var(--subtext0);

@@ -24,6 +24,11 @@
       Format Document
     </button>
 
+    <button class="btn btn-secondary" id="bqLevelBtn" onclick="addBlockquoteLevels()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h12M3 18h8"/><path d="M17 14l3 3-3 3"/></svg>
+      Add Blockquote Level
+    </button>
+
     <div class="toolbar-sep"></div>
 
     <button class="btn btn-ghost" onclick="copyOutput()">
@@ -125,6 +130,16 @@
   <div class="rule-item">
     <h3>Rule 5 · List Spacing</h3>
     <p>Numbered/lettered list markers like <code>(i)Word</code> become <code>(i) Word</code> — exactly one space. No bolding of inner markers.</p>
+  </div>
+
+  <div class="rule-item">
+    <h3>Rule 6 · Currency Format</h3>
+    <p>All Malaysian Ringgit amounts are normalised to <code>RMX,XXX.XX</code> — no space after RM, thousands comma, always two decimal places. E.g. <code>RM 7,000</code> → <code>RM7,000.00</code>, <code>RM 6850</code> → <code>RM6,850.00</code>.</p>
+  </div>
+
+  <div class="rule-item">
+    <h3>Rule 7 · Bullet Symbol</h3>
+    <p>The bullet character <code>•</code> is replaced with its ASCII entity <code>&amp;#149;</code> followed by exactly one space. E.g. <code>•Left ear pinna</code> → <code>&amp;#149; Left ear pinna</code>.</p>
   </div>
 </div>
 
@@ -353,6 +368,37 @@ function identifyMainSequence(paragraphs) {
   return seqIndices;
 }
 
+// ── Rule 6: Currency Formatter ──
+// Normalises any RM amount variant to RMX,XXX.XX
+// Handles: RM7000 / RM 7,000 / RM 7000 / RM7,000 / RM 7,000.50 etc.
+function formatCurrency(html) {
+  // Match "RM" followed by optional space, then a number (with optional commas/dots)
+  // The number part: digits, optional commas as thousands sep, optional decimal part
+  return html.replace(/\bRM\s*([\d,]+(?:\.\d{1,2})?)/gi, (match, raw) => {
+    // Strip any existing commas to get the plain number string
+    const plain = raw.replace(/,/g, '');
+    // Split into integer and decimal parts
+    const [intPart, decPart] = plain.split('.');
+    // Parse integer
+    const intVal = parseInt(intPart, 10);
+    if (isNaN(intVal)) return match; // leave untouched if unparseable
+    // Build decimal string (always 2 dp)
+    const dec = decPart !== undefined
+      ? decPart.padEnd(2, '0').slice(0, 2)
+      : '00';
+    // Add thousands comma(s) to integer part
+    const intFormatted = intVal.toLocaleString('en-MY');
+    return `RM${intFormatted}.${dec}`;
+  });
+}
+
+// ── Rule 7: Bullet Symbol Formatter ──
+// Replaces the • character (U+2022) with &#149; and ensures one space after it
+function formatBullets(html) {
+  // Replace • (with any surrounding whitespace) with &#149; followed by a single space
+  return html.replace(/•\s*/g, '&#149; ');
+}
+
 // ── The Formatting Engine ──
 function processHtmlRules(rawHtml) {
   const parser = new DOMParser();
@@ -466,7 +512,90 @@ function processHtmlRules(rawHtml) {
     outputLines.push('  '.repeat(bqDepth) + '</blockquote>');
   }
 
-  return outputLines.join('\n\n');
+  // Rule 6: Normalise all RM currency amounts to RMX,XXX.XX
+  // Rule 7: Replace • with &#149; (followed by one space)
+  return formatBullets(formatCurrency(outputLines.join('\n\n')));
+}
+
+// ── Add Blockquote Level ──
+// Wraps the direct content of every <blockquote> in a <LEVELX> tag,
+// where X is the nesting depth of that blockquote (1-based).
+// <blockquote> and <LEVELX> are always on separate lines.
+// </LEVELX> and </blockquote> are always on separate lines.
+function processBlockquoteLevels(html) {
+  const tokenRe = /<\/?blockquote\b[^>]*>/gi;
+  const tokens = [];
+  let lastIdx = 0;
+  let m;
+  while ((m = tokenRe.exec(html)) !== null) {
+    if (m.index > lastIdx) {
+      tokens.push({ type: 'text', raw: html.slice(lastIdx, m.index) });
+    }
+    const isClosing = m[0].startsWith('</');
+    tokens.push({ type: 'tag', raw: m[0], closing: isClosing });
+    lastIdx = m.index + m[0].length;
+  }
+  if (lastIdx < html.length) {
+    tokens.push({ type: 'text', raw: html.slice(lastIdx) });
+  }
+
+  let depth = 0;
+  const out = [];
+
+  for (const tok of tokens) {
+    if (tok.type === 'tag') {
+      if (!tok.closing) {
+        // <blockquote> on its own line, then <LEVELX> on the next line
+        out.push(tok.raw + '\n');
+        depth++;
+        out.push(`<LEVEL${depth}>`);
+      } else {
+        // </LEVELX> on its own line, then </blockquote> on the next line
+        out.push(`</LEVEL${depth}>\n`);
+        depth--;
+        out.push(tok.raw);
+      }
+    } else {
+      out.push(tok.raw);
+    }
+  }
+
+  return out.join('');
+}
+
+function addBlockquoteLevels() {
+  const input = document.getElementById('inputText').value.trim();
+  if (!input) { showToast('Please paste some formatted HTML first', 'error'); return; }
+
+  const btn = document.getElementById('bqLevelBtn');
+  btn.disabled = true;
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('outputText').style.display = 'none';
+  document.getElementById('skeletonLoader').style.display = 'block';
+  setStatus('processing', 'Adding blockquote levels…');
+
+  setTimeout(() => {
+    try {
+      const result = processBlockquoteLevels(input);
+
+      outputContent = result;
+      const outEl = document.getElementById('outputText');
+      outEl.textContent = result;
+      outEl.style.display = 'block';
+      document.getElementById('outputCount').textContent = result.length.toLocaleString() + ' chars';
+
+      setStatus('done', 'Levels added');
+      showToast('Blockquote levels added!');
+    } catch (err) {
+      setStatus('error', 'Error');
+      document.getElementById('emptyState').style.display = '';
+      showToast('Error: ' + err.message, 'error');
+      console.error(err);
+    } finally {
+      document.getElementById('skeletonLoader').style.display = 'none';
+      btn.disabled = false;
+    }
+  }, 80);
 }
 
 // Init
