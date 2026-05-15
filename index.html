@@ -294,8 +294,10 @@ function mergeBrokenParagraphs(paragraphs) {
 
       if (isListMarker(nextText)) break;
 
-      const endsFragile = /[a-z0-9,\/]\s*$/i.test(currentText) && !/[.!?:]\s*$/.test(currentText);
-      const startsWeak = /^[a-z]/.test(nextText);
+      const words = currentText.split(/\s+/);
+      const looksLikeHeading = words.length <= 6 && !currentText.endsWith(',');
+      const endsFragile = /[a-z0-9,\/]\s*$/i.test(currentText) && !/[.!?:]\s*$/.test(currentText) && !looksLikeHeading;
+      const startsWeak = /^[A-Za-z]/.test(nextText);
 
       if (endsFragile && startsWeak) {
         const joiner = currentText.endsWith('/') ? '' : ' ';
@@ -311,91 +313,23 @@ function mergeBrokenParagraphs(paragraphs) {
   return merged;
 }
 
-// ── NEW PRE-PASS: Longest Increasing Subsequence to isolate True Main Sequences ──
-function identifyMainSequence(paragraphs) {
-  const seqIndices = new Set();
-  const candidates = [];
-  
-  for (let i = 0; i < paragraphs.length; i++) {
-    const text = paragraphs[i].textContent.trim();
-    const match = text.match(/^\[?(\d+)\]?\.?\s*([\s\S]*)$/);
-    
-    // Ignore list items that look like "1.1" or "23.5"
-    if (match && !/^\d+\.\d+/.test(text.split(/\s+/)[0])) {
-      candidates.push({ index: i, val: parseInt(match[1], 10) });
-    }
-  }
-
-  if (candidates.length === 0) return seqIndices;
-
-  // LIS algorithm with logic tailored for legal documents
-  let dp = new Array(candidates.length).fill(1);
-  let prev = new Array(candidates.length).fill(-1);
-
-  for (let i = 1; i < candidates.length; i++) {
-    for (let j = 0; j < i; j++) {
-      let diff = candidates[i].val - candidates[j].val;
-      // Sequence must increase, allowing for reasonably skipped numbers up to 50
-      if (diff > 0 && diff <= 50) { 
-        // FIX IMPLEMENTED HERE: Changed > to >=
-        // Using >= ensures that in a numbering collision (e.g., two "23"s),
-        // the algorithm prefers the most recent valid sequence item, preventing it 
-        // from prematurely mapping quoted numbers.
-        if (dp[j] + 1 >= dp[i]) {
-          dp[i] = dp[j] + 1;
-          prev[i] = j;
-        }
-      }
-    }
-  }
-
-  let maxLen = 0;
-  let maxIdx = -1;
-  for (let i = 0; i < candidates.length; i++) {
-    // Uses >= to ensure the furthest reaching main sequence is preferred
-    if (dp[i] >= maxLen) { 
-      maxLen = dp[i];
-      maxIdx = i;
-    }
-  }
-
-  let curr = maxIdx;
-  while (curr !== -1) {
-    seqIndices.add(candidates[curr].index);
-    curr = prev[curr];
-  }
-
-  return seqIndices;
-}
-
 // ── Rule 6: Currency Formatter ──
-// Normalises any RM amount variant to RMX,XXX.XX
-// Handles: RM7000 / RM 7,000 / RM 7000 / RM7,000 / RM 7,000.50 etc.
 function formatCurrency(html) {
-  // Match "RM" followed by optional space, then a number (with optional commas/dots)
-  // The number part: digits, optional commas as thousands sep, optional decimal part
   return html.replace(/\bRM\s*([\d,]+(?:\.\d{1,2})?)/gi, (match, raw) => {
-    // Strip any existing commas to get the plain number string
     const plain = raw.replace(/,/g, '');
-    // Split into integer and decimal parts
     const [intPart, decPart] = plain.split('.');
-    // Parse integer
     const intVal = parseInt(intPart, 10);
-    if (isNaN(intVal)) return match; // leave untouched if unparseable
-    // Build decimal string (always 2 dp)
+    if (isNaN(intVal)) return match; 
     const dec = decPart !== undefined
       ? decPart.padEnd(2, '0').slice(0, 2)
       : '00';
-    // Add thousands comma(s) to integer part
     const intFormatted = intVal.toLocaleString('en-MY');
     return `RM${intFormatted}.${dec}`;
   });
 }
 
 // ── Rule 7: Bullet Symbol Formatter ──
-// Replaces the • character (U+2022) with &#149; and ensures one space after it
 function formatBullets(html) {
-  // Replace • (with any surrounding whitespace) with &#149; followed by a single space
   return html.replace(/•\s*/g, '&#149; ');
 }
 
@@ -403,20 +337,99 @@ function formatBullets(html) {
 function processHtmlRules(rawHtml) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(rawHtml, 'text/html');
-  const rawParagraphs = Array.from(doc.body.querySelectorAll('p'))
-    .filter(p => p.textContent.trim().length > 0); 
+  let rawParagraphs = Array.from(doc.body.querySelectorAll('p'))
+    // Menghapuskan perenggan yang mengandungi &nbsp; atau ruang kosong (zero-width) sahaja
+    .filter(p => p.textContent.replace(/[\u00A0\u200B]/g, '').trim().length > 0); 
     
+  // -- 1. SPLIT INLINE HEADINGS PRE-PASS --
+  const splitParagraphs = [];
+  for (let p of rawParagraphs) {
+    let htmlStr = p.innerHTML.trim();
+    const htmlMatch = htmlStr.match(/^([\s\S]*?)\[\s*(\d+)\s*\]([\s\S]*)$/);
+    
+    if (htmlMatch) {
+      const potentialHeadingHtml = htmlMatch[1];
+      const potentialHeadingTextDiv = document.createElement('div');
+      potentialHeadingTextDiv.innerHTML = potentialHeadingHtml;
+      const headingTextOnly = potentialHeadingTextDiv.textContent.trim();
+
+      const wordCount = headingTextOnly.split(/\s+/).length;
+      if (headingTextOnly && wordCount > 0 && wordCount <= 10 && !/[.:,\-!?\;]$/.test(headingTextOnly) && !/see also/i.test(headingTextOnly)) {
+        let hP = document.createElement('p');
+        hP.innerHTML = potentialHeadingHtml.trim();
+        splitParagraphs.push(hP);
+
+        let numP = document.createElement('p');
+        numP.innerHTML = `[${htmlMatch[2]}] ${htmlMatch[3].trim()}`;
+        splitParagraphs.push(numP);
+        continue;
+      }
+    }
+    splitParagraphs.push(p);
+  }
+  rawParagraphs = splitParagraphs;
+
   const paragraphs = mergeBrokenParagraphs(rawParagraphs);
   if (paragraphs.length === 0) return rawHtml;
 
-  // Execute the pre-pass to find only the True Main Sequence numbers
-  const trueMainIndices = identifyMainSequence(paragraphs);
-
   const outputLines = [];
-  let isFirst = true;
+  
+  // State Machine Tracking
   let bqDepth = 0;
+  let lastMainNum = 0;
+  let mainStyleHasBracket = null;
 
-  // Matches ':', '-', ':-', '—' (em-dash), or '–' (en-dash)
+  // -- 2. TITLE IDENTIFICATION & EXTRACTION --
+  let titleType = 'JUDGMENT'; 
+  let titleIndex = -1;
+  let awardIndex = -1;
+  let refIndex = -1;
+  let refLabel = 'Reference:'; 
+
+  for (let i = 0; i < Math.min(10, paragraphs.length); i++) {
+    let txt = paragraphs[i].textContent.trim().toUpperCase();
+    if (txt === 'AWARD') { awardIndex = i; titleIndex = i; titleType = 'AWARD'; break; }
+    if (txt.includes('PENGHAKIMAN')) { titleIndex = i; titleType = 'PENGHAKIMAN'; break; }
+    if (txt.includes('JUDGMENT') || txt.includes('GROUNDS OF DECISION') || txt.includes('ALASAN PENGHAKIMAN')) { titleIndex = i; titleType = 'JUDGMENT'; break; }
+  }
+
+  if (awardIndex !== -1) {
+    for (let i = 0; i < awardIndex; i++) {
+      let txt = paragraphs[i].textContent.trim().toUpperCase();
+      if (txt.startsWith('REFERENCE') || txt.startsWith('RUJUKAN')) {
+        refIndex = i;
+        if (txt.includes('REFERENCE') && txt.includes('RUJUKAN')) {
+          refLabel = 'Reference / Rujukan:';
+        } else if (txt.startsWith('RUJUKAN')) {
+          refLabel = 'Rujukan:';
+        }
+        break;
+      }
+    }
+  }
+
+  let skipIndices = new Set();
+
+  if (titleType === 'AWARD' && titleIndex !== -1) {
+      outputLines.push('<p><b>AWARD</b></p>');
+      skipIndices.add(titleIndex);
+      if (refIndex !== -1) {
+          outputLines.push(`<p><b>${refLabel}</b></p>`);
+          skipIndices.add(refIndex);
+          for (let j = refIndex + 1; j < titleIndex; j++) {
+              outputLines.push(`<p>${paragraphs[j].innerHTML.trim()}</p>`);
+              skipIndices.add(j);
+          }
+      }
+      for (let j = 0; j <= titleIndex; j++) skipIndices.add(j);
+  } else if (titleIndex !== -1) {
+      outputLines.push(`<p><b>${titleType}</b></p>`);
+      for (let j = 0; j <= titleIndex; j++) skipIndices.add(j);
+  } else {
+      outputLines.push('<p><b>JUDGMENT</b></p>');
+      skipIndices.add(0);
+  }
+
   const isTrigger = (str) => /[:\-\u2013\u2014]\s*$/.test(str.trim()); 
   
   const isSubListItem = (str) => {
@@ -425,44 +438,103 @@ function processHtmlRules(rawHtml) {
 
   const isHeading = (str, isMainNumLine) => {
     if (isMainNumLine) return false;
-    const wordCount = str.trim().split(/\s+/).length;
+    const cleanStr = str.replace(/^(\(?[a-zA-Z0-9]{1,4}\)|[a-zA-Z0-9]{1,4}\.|\[\d+\])\s*/i, '').trim();
+    if (!cleanStr) return false;
+    const wordCount = cleanStr.split(/\s+/).length;
     return wordCount > 0 && 
-           wordCount <= 5 && 
+           wordCount <= 7 && 
            !/[.:,\-!?\;]$/.test(str.trim()) && 
-           !isSubListItem(str) && 
-           /^[A-Za-z]/.test(str.trim());
+           /^[A-Za-z0-9\(]/.test(str.trim()) && 
+           !/^See also\b/i.test(str.trim());
   };
 
   const isCitationReturn = (str) => {
     return /^See also\b/i.test(str.trim());
   };
   
-  const toTitleCase = (str) => str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+  const toTitleCase = (str) => {
+    const match = str.match(/^(\(?[a-zA-Z0-9]{1,4}\)|[a-zA-Z0-9]{1,4}\.|\[\d+\])?\s*(.*)$/);
+    let marker = match && match[1] ? match[1] : '';
+    let rest = match ? match[2] : str;
+    
+    rest = rest.replace(/\w\S*/g, (txt) => {
+       return txt.split('-').map(part => part.charAt(0).toUpperCase() + part.substr(1).toLowerCase()).join('-');
+    });
+    
+    return marker ? (marker + (rest ? ' ' + rest : '')) : rest;
+  };
 
   // -- MAIN LOOP --
   for (let i = 0; i < paragraphs.length; i++) {
+    if (skipIndices.has(i)) continue;
+
     const p = paragraphs[i];
     const text = p.textContent.trim(); 
     if (!text) continue;
 
-    // Rule 1: Master Title
-    if (isFirst) {
-      outputLines.push('<p><b>JUDGMENT</b></p>');
-      isFirst = false;
-      continue;
+    let isMainNum = false;
+    let parsedNum = null;
+    let numMatch = text.match(/^(\[?\s*)(\d+)(\s*\]?\.?)\s*([\s\S]*)$/);
+    
+    // Evaluate if the current paragraph is a true main number
+    if (numMatch) {
+      const rawStart = text.split(/\s+/).slice(0, 3).join('');
+      if (!/^\d+\.\d+/.test(rawStart.replace(/[\[\]]/g, ''))) {
+        let num = parseInt(numMatch[2], 10);
+        let hasBracket = numMatch[1].includes('[') || numMatch[3].includes(']');
+        let styleMatches = (mainStyleHasBracket === null) || (mainStyleHasBracket === hasBracket);
+
+        if (lastMainNum === 0) {
+          isMainNum = true;
+          lastMainNum = num;
+          mainStyleHasBracket = hasBracket;
+          parsedNum = { num: numMatch[2], text: numMatch[4] };
+        } else if (num > lastMainNum && num <= lastMainNum + 20) {
+          if (bqDepth > 0 && !styleMatches) {
+            // Ignored as it is likely a nested list utilizing a different numbering style
+          } else {
+            isMainNum = true;
+            lastMainNum = num;
+            if (bqDepth === 0) mainStyleHasBracket = hasBracket;
+            parsedNum = { num: numMatch[2], text: numMatch[4] };
+          }
+        }
+      }
     }
 
-    const isMainNum = trueMainIndices.has(i);
-    const numMatch = isMainNum ? text.match(/^\[?(\d+)\]?\.?\s*([\s\S]*)$/) : null;
-    let parsedNum = numMatch ? { num: numMatch[1], text: numMatch[2] } : null;
+    // Peek ahead logic strictly for heading exit evaluation
+    let nextIsMainNum = false;
+    if (i + 1 < paragraphs.length) {
+      let nextText = paragraphs[i+1].textContent.trim();
+      let nMatch = nextText.match(/^(\[?\s*)(\d+)(\s*\]?\.?)\s*([\s\S]*)$/);
+      if (nMatch) {
+        let nNum = parseInt(nMatch[2], 10);
+        let nHasBracket = nMatch[1].includes('[') || nMatch[3].includes(']');
+        let nStyleMatches = (mainStyleHasBracket === null) || (mainStyleHasBracket === nHasBracket);
+        if (nNum > lastMainNum && nNum <= lastMainNum + 20) {
+          if (!(bqDepth > 0 && !nStyleMatches)) {
+            nextIsMainNum = true;
+          }
+        }
+      }
+    }
 
     let headingMatch = isHeading(text, isMainNum);
     const subListMatch = isSubListItem(text);
     const citationReturnMatch = isCitationReturn(text);
 
-    // Rule 3 Enforcement: Headings do NOT apply inside blockquotes
+    // Rule 3 Enforcement
     if (bqDepth > 0) {
-        headingMatch = false; 
+        let isAllCaps = text === text.toUpperCase() && /[A-Z]/.test(text);
+        
+        // Aturan baru: Abaikan format tajuk untuk penanda senarai JIKA berada di dalam blockquote
+        if (subListMatch) {
+            headingMatch = false; 
+        } else if (headingMatch && (nextIsMainNum || isAllCaps)) {
+            headingMatch = true; 
+        } else {
+            headingMatch = false; 
+        }
     }
 
     // --- ESCAPE CLAUSES ---
@@ -492,7 +564,6 @@ function processHtmlRules(rawHtml) {
           outputLines.push(`${indent}<p>${content}</p>`); 
       }
     } else {
-      // Inside a blockquote: leave numbers as they are, fix list spacing
       let fixedHtml = p.innerHTML.trim()
           .replace(/^(\(?[a-zA-Z0-9]+\)|[a-zA-Z0-9]+\.)(?=[^\s<])/i, '$1 ')
           .replace(/\u2014/g, '&#151;'); 
@@ -506,22 +577,15 @@ function processHtmlRules(rawHtml) {
     }
   }
 
-  // Close any lingering blockquotes
   while (bqDepth > 0) {
     bqDepth--;
     outputLines.push('  '.repeat(bqDepth) + '</blockquote>');
   }
 
-  // Rule 6: Normalise all RM currency amounts to RMX,XXX.XX
-  // Rule 7: Replace • with &#149; (followed by one space)
   return formatBullets(formatCurrency(outputLines.join('\n\n')));
 }
 
 // ── Add Blockquote Level ──
-// Wraps the direct content of every <blockquote> in a <LEVELX> tag,
-// where X is the nesting depth of that blockquote (1-based).
-// <blockquote> and <LEVELX> are always on separate lines.
-// </LEVELX> and </blockquote> are always on separate lines.
 function processBlockquoteLevels(html) {
   const tokenRe = /<\/?blockquote\b[^>]*>/gi;
   const tokens = [];
@@ -545,12 +609,10 @@ function processBlockquoteLevels(html) {
   for (const tok of tokens) {
     if (tok.type === 'tag') {
       if (!tok.closing) {
-        // <blockquote> on its own line, then <LEVELX> on the next line
         out.push(tok.raw + '\n');
         depth++;
         out.push(`<LEVEL${depth}>`);
       } else {
-        // </LEVELX> on its own line, then </blockquote> on the next line
         out.push(`</LEVEL${depth}>\n`);
         depth--;
         out.push(tok.raw);
