@@ -104,6 +104,10 @@
   </div>
 </main>
 
+<footer class="app-footer">
+  <p>Judgment Formatter &copy; 2026 by ifrzaa. All rights reserved.</p>
+</footer>
+
 <div class="rules-drawer" id="rulesDrawer">
   <h2>Formatting Rules <button class="close-btn" onclick="toggleRules()">✕</button></h2>
 
@@ -119,7 +123,7 @@
 
   <div class="rule-item">
     <h3>Rule 3 · Section Headings</h3>
-    <p>Standalone headings (e.g. <em>Brief Factual Background</em>) are wrapped in <code>&lt;b&gt;...&lt;/b&gt;</code> with Title Case. Not applied inside blockquotes.</p>
+    <p>Standalone headings (e.g. <em>BRIEF FACTUAL BACKGROUND</em>) are wrapped in <code>&lt;SPARA_TITLE&gt;&lt;p&gt;&lt;b&gt;...&lt;/b&gt;&lt;/p&gt;&lt;/SPARA_TITLE&gt;</code> and capitalised. Not applied inside blockquotes.</p>
   </div>
 
   <div class="rule-item">
@@ -558,7 +562,7 @@ function processHtmlRules(rawHtml) {
       if (isMainNum && parsedNum) {
           outputLines.push(`${indent}<p><b>[${parsedNum.num}]</b> ${parsedNum.text.replace(/\u2014/g, '&#151;')}</p>`);
       } else if (headingMatch) {
-          outputLines.push(`${indent}<p><b>${toTitleCase(text)}</b></p>`);
+          outputLines.push(`${indent}<SPARA_TITLE><p><b>${toTitleCase(text)}</b></p></SPARA_TITLE>`);
       } else {
           let content = p.innerHTML.trim().replace(/\u2014/g, '&#151;');
           outputLines.push(`${indent}<p>${content}</p>`); 
@@ -609,20 +613,25 @@ function processBlockquoteLevels(html) {
   for (const tok of tokens) {
     if (tok.type === 'tag') {
       if (!tok.closing) {
-        out.push(tok.raw + '\n');
         depth++;
-        out.push(`<LEVEL${depth}>`);
+        out.push(`${tok.raw}<LEVEL${depth}>`);
       } else {
-        out.push(`</LEVEL${depth}>\n`);
+        out.push(`</LEVEL${depth}>${tok.raw}`);
         depth--;
-        out.push(tok.raw);
       }
     } else {
       out.push(tok.raw);
     }
   }
 
-  return out.join('');
+  let result = out.join('');
+  
+  // Collapse whitespace/newlines to keep structural tags on the same line
+  result = result.replace(/(<LEVEL\d+>)\s+<p>/gi, '$1<p>');
+  result = result.replace(/<\/p>\s+(<\/LEVEL\d+>)/gi, '</p>$1');
+  result = result.replace(/<\/blockquote>\s+(<\/LEVEL\d+>)/gi, '</blockquote>$1');
+
+  return result;
 }
 
 function addBlockquoteLevels() {
@@ -660,8 +669,11 @@ function addBlockquoteLevels() {
   }, 80);
 }
 
-// Init
-updateCount();
+document.addEventListener("DOMContentLoaded", function() {
+    // This ensures all HTML and CSS is loaded before running
+    updateCount();
+    setStatus('', 'Ready');
+});
 </script>
 </body>
 </html>

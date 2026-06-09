@@ -89,9 +89,22 @@
     flex: 1;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
     gap: 0;
-    height: calc(100vh - 77px);
+  }
+
+  /* ── Footer ── */
+  .app-footer {
+    background: var(--mantle);
+    border-top: 1px solid var(--surface0);
+    padding: 10px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    color: var(--overlay0);
+    letter-spacing: 0.05em;
+    flex-shrink: 0; /* Prevents the footer from squishing */
   }
 
   /* ── Toolbar ── */
