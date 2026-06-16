@@ -680,26 +680,62 @@ function processTouchUp(html) {
   result = result.replace(/<LEVEL(\d+)>\s*/gi, '<LEVEL$1>');
   result = result.replace(/\s*<\/LEVEL(\d+)>/gi, '</LEVEL$1>');
 
-  // 3. Fix Section Headings: Wrap orphaned <p><b>...</b></p> in <SPARA_TITLE>
-  // First, temporarily strip existing SPARA_TITLE tags to avoid accidental double-wrapping
+  // 3. Fix Section Headings
+  // First, completely STRIP any existing SPARA_TITLE tags globally to cleanly reset the state.
   result = result.replace(/<\/?SPARA_TITLE>/gi, '');
 
-  result = result.replace(/<p>\s*<b>(.*?)<\/b>\s*<\/p>/gi, (match, inner) => {
-    const text = inner.trim().toUpperCase();
+  // Helper logic to evaluate and wrap valid bold headings
+  const headingReplacer = (pMatch, inner) => {
+    const cleanText = inner.replace(/<[^>]*>/g, '').trim().toUpperCase();
+    const rawText = inner.trim().toUpperCase();
     
     // Ignore main document titles and reference headers
-    if (text === 'JUDGMENT' || text === 'PENGHAKIMAN' || text === 'AWARD' || text.startsWith('REFERENCE') || text.startsWith('RUJUKAN')) {
-      return match; 
+    if (cleanText === 'JUDGMENT' || cleanText === 'PENGHAKIMAN' || cleanText === 'AWARD' || cleanText.startsWith('REFERENCE') || cleanText.startsWith('RUJUKAN')) {
+      return pMatch; 
     }
     
-    // Ignore numbered paragraphs (e.g., "[3]", "1.")
-    if (/^\[?\d+\]?/.test(text)) {
-      return match;
+    // Ignore numbered paragraphs (e.g., "[3]", "1.", "(1)")
+    if (/^\[?\d+\]?/.test(cleanText) || /^\(?\d+\)?/.test(cleanText)) {
+      return pMatch;
+    }
+
+    // Ignore Judge identifiers (ends with a colon OR contains the raw <NAME> tag)
+    if (rawText.includes('<NAME>') || cleanText.endsWith(':')) {
+      return pMatch;
     }
     
-    // Apply the SPARA_TITLE wrapper to everything else that matches
-    return `<SPARA_TITLE><p><b>${inner}</b></p></SPARA_TITLE>`;
-  });
+    // Apply the SPARA_TITLE wrapper to valid headings
+    return `<SPARA_TITLE><p><b>${inner.trim()}</b></p></SPARA_TITLE>`;
+  };
+
+  // Check if we are dealing with raw XML containing the <JUDGMENT> tag
+  const hasJudgmentTag = /<JUDGMENT\b[^>]*>/i.test(result);
+
+  if (hasJudgmentTag) {
+    // RAW XML STATE: Slicing string strictly inside <JUDGMENT> boundaries
+    const startMatch = result.match(/<JUDGMENT\b[^>]*>/i);
+    const startIndex = startMatch.index + startMatch[0].length;
+    let beforeJudgment = result.substring(0, startIndex);
+    let remaining = result.substring(startIndex);
+
+    let judgmentBody = remaining;
+    let afterJudgment = "";
+
+    const endMatch = remaining.match(/<\/JUDGMENT>/i);
+    if (endMatch) {
+      judgmentBody = remaining.substring(0, endMatch.index);
+      afterJudgment = remaining.substring(endMatch.index);
+    }
+
+    // Apply strictly inside the sliced judgment body
+    judgmentBody = judgmentBody.replace(/<p>\s*<b>((?:(?!<\/?p\b)[\s\S])*?)<\/b>\s*<\/p>/gi, headingReplacer);
+    result = beforeJudgment + judgmentBody + afterJudgment;
+    
+  } else {
+    // FORMATTED HTML STATE: The <JUDGMENT> tag and metadata were already removed by 'Format Document'. 
+    // It is safe to run the replacer globally on the entire document.
+    result = result.replace(/<p>\s*<b>((?:(?!<\/?p\b)[\s\S])*?)<\/b>\s*<\/p>/gi, headingReplacer);
+  }
 
   return result;
 }
