@@ -31,7 +31,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    background: var(--base);
+    background: var(--mantle);
     color: var(--text);
     font-family: 'DM Mono', monospace;
     min-height: 100vh;
@@ -41,12 +41,15 @@
 
   /* ── Header ── */
   header {
-    background: var(--mantle);
-    border-bottom: 1px solid var(--surface0);
-    padding: 20px 40px;
+    background: var(--crust);
+    border-bottom: 1px solid var(--mantle); /* Softer border color */
+    box-shadow: 0 4px 12px rgba(17, 17, 27, 0.5); /* Adds depth */
+    padding: 16px 40px; /* Slightly slimmer padding for a sleeker look */
     display: flex;
     align-items: center;
     gap: 16px;
+    z-index: 10; /* Ensures the shadow falls over the main content */
+    position: relative;
   }
 
   .logo-icon {
@@ -85,17 +88,22 @@
   }
 
   /* ── Main Layout ── */
+ /* ── Main Layout ── */
   main {
     flex: 1;
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto minmax(0, 1fr);
-    gap: 0;
+    gap: 24px;
+    padding: 24px 40px 40px 40px; 
+    max-width: 1800px; /* Caps the width on ultra-wide screens */
+    margin: 0 auto;    /* Centers the workspace */
+    width: 100%;
   }
 
   /* ── Footer ── */
   .app-footer {
-    background: var(--mantle);
+    background: var(--crust);
     border-top: 1px solid var(--surface0);
     padding: 10px 40px;
     display: flex;
@@ -110,9 +118,9 @@
   /* ── Toolbar ── */
   .toolbar {
     grid-column: 1 / -1;
-    background: var(--mantle);
-    border-bottom: 1px solid var(--surface0);
-    padding: 12px 40px;
+    background: transparent; /* Removes the heavy block color */
+    border-bottom: none;
+    padding: 0 0 8px 0;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -156,17 +164,36 @@
     cursor: not-allowed;
   }
 
+  /* Secondary: Teal Outline */
   .btn-secondary {
-    background: var(--teal);
-    color: var(--crust);
+    background: transparent;
+    color: var(--teal);
     font-weight: 500;
+    border: 1px solid var(--teal);
   }
   .btn-secondary:hover:not(:disabled) {
-    background: var(--sky);
+    background: rgba(148, 226, 213, 0.1); /* Subtle Teal fill on hover */
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(148,226,213,0.3);
+    box-shadow: 0 4px 12px rgba(148,226,213,0.15);
   }
   .btn-secondary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* Tertiary: Blue Outline */
+  .btn-tertiary {
+    background: transparent;
+    color: var(--blue);
+    font-weight: 500;
+    border: 1px solid var(--blue);
+  }
+  .btn-tertiary:hover:not(:disabled) {
+    background: rgba(137, 180, 250, 0.1); /* Subtle Blue fill on hover */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(137,180,250,0.15);
+  }
+  .btn-tertiary:disabled {
     opacity: 0.45;
     cursor: not-allowed;
   }
@@ -232,19 +259,25 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border-right: 1px solid var(--surface0);
+    border: 1px solid var(--surface0); /* Full border instead of just right-side */
+    border-radius: 12px; /* Smooth card corners */
+    background: var(--mantle);
+    box-shadow: 0 8px 24px rgba(17, 17, 27, 0.4); /* Deep floating shadow */
     min-height: 0;
   }
+
   .panel:last-child { border-right: none; }
 
   .panel-header {
-    padding: 14px 24px 12px;
-    background: var(--mantle);
+    padding: 14px 24px;
+    background: var(--base); /* Slightly darker header to contrast with textarea */
     border-bottom: 1px solid var(--surface0);
     display: flex;
     align-items: center;
     gap: 10px;
     flex-shrink: 0;
+    height: 58px; 
+    box-sizing: border-box;
   }
 
   .panel-title {
@@ -267,6 +300,43 @@
     overflow: hidden;
     position: relative;
     min-height: 0;
+    background: var(--base);
+  }
+
+  .panel-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--overlay1);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+
+  .icon-btn:hover {
+    background: var(--surface1);
+    color: var(--text);
+    transform: translateY(-1px);
+  }
+
+  .icon-btn svg {
+    width: 15px; 
+    height: 15px;
+  }
+  
+  /* Reset panel-count margin since flexbox handles spacing now */
+  .panel-count {
+    margin-left: 0;
   }
 
   textarea {
@@ -275,22 +345,28 @@
     width: 100%;
     height: 100%;
     background: var(--base);
-    color: var(--text);
+    color: var(--blue);
     border: none;
     outline: none;
     resize: none;
     font-family: 'DM Mono', monospace;
     font-size: 0.82rem;
     line-height: 1.75;
-    padding: 24px;
+    padding: 24px 16px 24px 24px; /* Reduced right padding slightly to accommodate scrollbar */
     caret-color: var(--mauve);
     overflow-y: auto;
+    
+    /* Add border radius to match the panel, but subtract the header height/border */
+    border-radius: 0 0 11px 11px; 
   }
 
   textarea::placeholder { color: var(--surface2); }
 
   textarea:focus {
-    background: color-mix(in srgb, var(--base) 97%, var(--mauve) 3%);
+    /* Use outline instead of inset box-shadow to prevent scrollbar overlap */
+    outline: 1px solid var(--mauve);
+    outline-offset: -1px; /* Keeps the outline inside the element */
+    background: var(--base);
   }
 
   /* ── Output panel ── */
@@ -305,7 +381,7 @@
     font-family: 'DM Mono', monospace;
     font-size: 0.82rem;
     line-height: 1.75;
-    color: var(--text);
+    color: var(--blue);
     white-space: pre-wrap;
     word-break: break-word;
   }
@@ -454,3 +530,13 @@
 
   /* drag-over highlight */
   textarea.drag-over { border: 2px dashed var(--mauve); background: color-mix(in srgb, var(--base) 94%, var(--mauve) 6%); }
+
+  /* ── Custom Text Selection ── */
+  ::selection {
+    background: rgba(203, 166, 247, 0.3); /* Transparent Mauve */
+    color: var(--text);
+  }
+  ::-moz-selection {
+    background: rgba(203, 166, 247, 0.3);
+    color: var(--text);
+  }

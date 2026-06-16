@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Judgment Formatter</title>
+<link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -17,29 +18,21 @@
 
 <main>
   <div class="toolbar">
-    <span class="toolbar-label">Actions</span>
-
     <button class="btn btn-primary" id="formatBtn" onclick="formatDocument()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
       Format Document
     </button>
 
-    <button class="btn btn-secondary" id="bqLevelBtn" onclick="addBlockquoteLevels()">
+    <button class="btn btn-secondary" id="touchUpBtn" onclick="touchUpDocument()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      Touch Up
+    </button>
+
+    <button class="btn btn-tertiary" id="bqLevelBtn" onclick="addBlockquoteLevels()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h12M3 18h8"/><path d="M17 14l3 3-3 3"/></svg>
       Add Blockquote Level
     </button>
 
-    <div class="toolbar-sep"></div>
-
-    <button class="btn btn-ghost" onclick="copyOutput()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-      Copy Output
-    </button>
-
-    <button class="btn btn-ghost" onclick="loadSample()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-      Load Sample
-    </button>
 
     <div class="toolbar-sep"></div>
 
@@ -63,11 +56,13 @@
     <div class="panel-header">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--overlay1)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       <span class="panel-title">Input — Original HTML</span>
+      <div class="panel-actions">
       <span class="panel-count" id="inputCount">0 chars</span>
+      </div>
     </div>
     <div class="panel-body">
       <textarea id="inputText"
-        placeholder="Paste your judgment HTML here...&#10;&#10;Supported formats:&#10;• <p>GROUNDS OF DECISION</p>&#10;• <p>1. Paragraph text...</p>&#10;• <p>[3]Paragraph text...</p>&#10;&#10;Or click 'Load Sample' to see an example."
+        placeholder="Paste your judgment HTML here...&#10;&#10;Supported formats:&#10;• <p>GROUNDS OF DECISION/ALASAN PENGHAKIMAN</p>&#10;• <p>1. Paragraph text...</p>&#10;• <p>[3]Paragraph text...</p>&#10;&#10;."
         oninput="updateCount()"
         ondragover="handleDragOver(event)"
         ondragleave="handleDragLeave(event)"
@@ -80,12 +75,17 @@
     <div class="panel-header">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--overlay1)" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       <span class="panel-title">Output — Formatted HTML</span>
-      <span class="panel-count" id="outputCount">0 chars</span>
+      <div class="panel-actions">
+        <span class="panel-count" id="outputCount">0 chars</span>
+        <button class="icon-btn" onclick="copyOutput()" title="Copy to clipboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+      </div>
     </div>
     <div class="panel-body" id="outputBody">
       <div class="empty-state" id="emptyState">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></svg>
-        <p>Formatted output will appear here after you click <em>Format Document</em></p>
+        <p>Formatted output will appear here.</p>
       </div>
       <div id="skeletonLoader" style="display:none" class="skeleton-wrap">
         <div class="skeleton-line" style="width:45%"></div>
@@ -667,6 +667,83 @@ function addBlockquoteLevels() {
       btn.disabled = false;
     }
   }, 80);
+}
+
+// ── Touch Up Formatter ──
+function processTouchUp(html) {
+  // 1. Fix Em dashes: Convert literal em dash to &#8212;
+  let result = html.replace(/—/g, '&#8212;');
+
+  // 2. Fix Blockquote & Level spacing: Collapse newlines/spaces immediately inside the tags
+  result = result.replace(/<blockquote>\s*/gi, '<blockquote>');
+  result = result.replace(/\s*<\/blockquote>/gi, '</blockquote>');
+  result = result.replace(/<LEVEL(\d+)>\s*/gi, '<LEVEL$1>');
+  result = result.replace(/\s*<\/LEVEL(\d+)>/gi, '</LEVEL$1>');
+
+  // 3. Fix Section Headings: Wrap orphaned <p><b>...</b></p> in <SPARA_TITLE>
+  // First, temporarily strip existing SPARA_TITLE tags to avoid accidental double-wrapping
+  result = result.replace(/<\/?SPARA_TITLE>/gi, '');
+
+  result = result.replace(/<p>\s*<b>(.*?)<\/b>\s*<\/p>/gi, (match, inner) => {
+    const text = inner.trim().toUpperCase();
+    
+    // Ignore main document titles and reference headers
+    if (text === 'JUDGMENT' || text === 'PENGHAKIMAN' || text === 'AWARD' || text.startsWith('REFERENCE') || text.startsWith('RUJUKAN')) {
+      return match; 
+    }
+    
+    // Ignore numbered paragraphs (e.g., "[3]", "1.")
+    if (/^\[?\d+\]?/.test(text)) {
+      return match;
+    }
+    
+    // Apply the SPARA_TITLE wrapper to everything else that matches
+    return `<SPARA_TITLE><p><b>${inner}</b></p></SPARA_TITLE>`;
+  });
+
+  return result;
+}
+
+// ── Touch Up UI Handler ──
+function touchUpDocument() {
+  // Use existing output if available, otherwise use raw input
+  let targetText = outputContent ? outputContent : document.getElementById('inputText').value.trim();
+  
+  if (!targetText) { 
+    showToast('Please load or format some HTML first', 'error'); 
+    return; 
+  }
+
+  const btn = document.getElementById('touchUpBtn');
+  if (btn) btn.disabled = true;
+  
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('outputText').style.display = 'none';
+  document.getElementById('skeletonLoader').style.display = 'block';
+  setStatus('processing', 'Applying touch ups…');
+
+  setTimeout(() => {
+    try {
+      const result = processTouchUp(targetText);
+      
+      outputContent = result;
+      const outEl = document.getElementById('outputText');
+      outEl.textContent = result;
+      outEl.style.display = 'block';
+      document.getElementById('outputCount').textContent = result.length.toLocaleString() + ' chars';
+
+      setStatus('done', 'Touch Up complete');
+      showToast('Document formatting touched up!');
+    } catch (err) {
+      setStatus('error', 'Error');
+      document.getElementById('emptyState').style.display = '';
+      showToast('Error: ' + err.message, 'error');
+      console.error(err);
+    } finally {
+      document.getElementById('skeletonLoader').style.display = 'none';
+      if (btn) btn.disabled = false;
+    }
+  }, 80); // Small delay to allow UI to render the skeleton loader
 }
 
 document.addEventListener("DOMContentLoaded", function() {
