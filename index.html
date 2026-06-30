@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
 <body>
 
@@ -23,6 +24,11 @@
       Format Document
     </button>
 
+    <button class="btn btn-quinary" id="catchwordsBtn" onclick="formatCatchwords()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h7"/><circle cx="19" cy="15" r="3"/><path d="M22 18l-1.5-1.5"/></svg>
+      Format Catchwords
+    </button>
+
     <button class="btn btn-secondary" id="touchUpBtn" onclick="touchUpDocument()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
       Touch Up
@@ -33,13 +39,17 @@
       Add Blockquote Level
     </button>
 
+    <button class="btn btn-quaternary" id="tableBtn" onclick="openTableModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+      Add Table
+    </button>
+
+    <button class="btn btn-senary" id="numberBtn" onclick="applyNumberingOnly()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Add Numbering
+    </button>
 
     <div class="toolbar-sep"></div>
-
-    <button class="btn btn-ghost" onclick="toggleRules()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      Rules
-    </button>
 
     <button class="btn btn-danger" onclick="clearAll()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
@@ -62,7 +72,7 @@
     </div>
     <div class="panel-body">
       <textarea id="inputText"
-        placeholder="Paste your judgment HTML here...&#10;&#10;Supported formats:&#10;• <p>GROUNDS OF DECISION/ALASAN PENGHAKIMAN</p>&#10;• <p>1. Paragraph text...</p>&#10;• <p>[3]Paragraph text...</p>&#10;&#10;."
+        placeholder="Paste your judgment HTML here to edit the formatting...&#10;&#10;Example:&#10;• <p>GROUNDS OF DECISION/ALASAN PENGHAKIMAN</p>&#10;• <p>1. Paragraph text...</p>&#10;• <p>[3]Paragraph text...</p>&#10;&#10;OR &#10;&#10;Drag and drop a doc file here to generate the headnote. AI can make mistakes. Be sure to review the generated headnote."
         oninput="updateCount()"
         ondragover="handleDragOver(event)"
         ondragleave="handleDragLeave(event)"
@@ -105,7 +115,7 @@
 </main>
 
 <footer class="app-footer">
-  <p>Judgment Formatter &copy; 2026 by ifrzaa. All rights reserved.</p>
+  <p>Judgment Formatter &copy; 2026 by ifrzaa.</p>
 </footer>
 
 <div class="rules-drawer" id="rulesDrawer">
@@ -144,6 +154,85 @@
   <div class="rule-item">
     <h3>Rule 7 · Bullet Symbol</h3>
     <p>The bullet character <code>•</code> is replaced with its ASCII entity <code>&amp;#149;</code> followed by exactly one space. E.g. <code>•Left ear pinna</code> → <code>&amp;#149; Left ear pinna</code>.</p>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="tableModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>PDF Table Converter</h3>
+      <button class="close-btn" onclick="closeTableModal()">✕</button>
+    </div>
+    <div class="modal-body">
+  <p class="modal-desc">Copy a table directly from MS Word or your PDF and paste it here. The tool will preserve the structure and format it into your required HTML layout.</p>
+  
+  <div id="tableHtmlInput" contenteditable="true" class="rich-paste-area" data-placeholder="Paste table data here..."></div>
+</div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeTableModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="insertTable()">Insert HTML Table</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="updateModal">
+  <div class="modal-content" style="max-width: 650px; overflow: hidden;">
+    <div class="modal-header">
+      <h3>🚀 What's New: Update Notice</h3>
+      <button class="close-btn" onclick="closeUpdateModal()">✕</button>
+    </div>
+    
+    <div class="modal-body slider-viewport">
+      
+      <button class="slider-arrow prev-arrow" id="prevSlideBtn" onclick="moveSlide(-1)" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+
+      <div class="slider-track" id="sliderTrack">
+        
+        <div class="slide update-item">
+          <h4>1. AI Headnote Generation</h4>
+          <p class="modal-desc">You can now drag and drop a <code>.docx</code> file directly into the input area to automatically generate an XML headnote using your local Ollama AI (runs fully offline — no API key needed).</p>
+          <div class="img-placeholder">
+            <img src="assets/dragndrop.jpg" alt="Drag and Drop Feature">
+          </div>
+        </div>
+
+        <div class="slide update-item">
+          <h4>2. PILRU Cases Table Generation</h4>
+          <p class="modal-desc">Seamlessly generate and format tables specifically tailored for PILRU cases.</p>
+          <div class="img-placeholder">
+            <img src="assets/tablepaste.jpg" alt="PILRU Table Generation">
+          </div>
+        </div>
+
+        <div class="slide update-item">
+          <h4>3. Improved "Touch Up" Button</h4>
+          <p class="modal-desc">We've enhanced the Touch Up tool with several smart formatting features:</p>
+          <ul class="update-list">
+            <li><strong>Inline blockquotes:</strong> Better handling of nested blockquotes.</li>
+            <li><strong>Currency formatting:</strong> Automatic standardized RM formatting.</li>
+            <li><strong>Citation & Case Names:</strong> Auto-corrects malformed brackets (e.g., changes <code>(1980)</code> to <code>[1980]</code>).</li>
+            <li><strong>Headings:</strong> Smarter addition of <code>&lt;SPARA_TITLE&gt;</code> tags.</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <button class="slider-arrow next-arrow" id="nextSlideBtn" onclick="moveSlide(1)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+
+    </div>
+
+    <div class="modal-footer" style="justify-content: space-between; align-items: center;">
+      <div class="slider-dots" id="sliderDots">
+        <span class="dot active"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+      <button class="btn btn-primary" id="modalActionBtn" onclick="handleModalAction()">Next</button>
+    </div>
   </div>
 </div>
 
@@ -239,13 +328,20 @@ function handleDrop(e) {
   e.target.classList.remove('drag-over');
   const file = e.dataTransfer.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    document.getElementById('inputText').value = ev.target.result;
-    updateCount();
-    showToast('File loaded: ' + file.name);
-  };
-  reader.readAsText(file);
+
+  // Check if the user dropped a DOCX file
+  if (file.name.endsWith('.docx') || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    processDocxWithOllama(file);
+  } else {
+    // Standard HTML/TXT file handling (your original logic)
+    const reader = new FileReader();
+    reader.onload = ev => {
+      document.getElementById('inputText').value = ev.target.result;
+      updateCount();
+      showToast('File loaded: ' + file.name);
+    };
+    reader.readAsText(file);
+  }
 }
 
 // ── Format via Regex and State Tracking ──
@@ -494,8 +590,16 @@ function processHtmlRules(rawHtml) {
           mainStyleHasBracket = hasBracket;
           parsedNum = { num: numMatch[2], text: numMatch[4] };
         } else if (num > lastMainNum && num <= lastMainNum + 20) {
-          if (bqDepth > 0 && !styleMatches) {
-            // Ignored as it is likely a nested list utilizing a different numbering style
+          if (bqDepth > 0) {
+            // Inside a blockquote, enforce strict sequential numbering
+            // to prevent quoted case paragraphs (e.g., [30]) from breaking out.
+            if (!styleMatches || num > lastMainNum + 2) {
+              // Ignored as it is likely a nested list or quoted paragraph
+            } else {
+              isMainNum = true;
+              lastMainNum = num;
+              parsedNum = { num: numMatch[2], text: numMatch[4] };
+            }
           } else {
             isMainNum = true;
             lastMainNum = num;
@@ -516,7 +620,11 @@ function processHtmlRules(rawHtml) {
         let nHasBracket = nMatch[1].includes('[') || nMatch[3].includes(']');
         let nStyleMatches = (mainStyleHasBracket === null) || (mainStyleHasBracket === nHasBracket);
         if (nNum > lastMainNum && nNum <= lastMainNum + 20) {
-          if (!(bqDepth > 0 && !nStyleMatches)) {
+          if (bqDepth > 0) {
+            if (nStyleMatches && nNum <= lastMainNum + 2) {
+              nextIsMainNum = true;
+            }
+          } else {
             nextIsMainNum = true;
           }
         }
@@ -587,6 +695,177 @@ function processHtmlRules(rawHtml) {
   }
 
   return formatBullets(formatCurrency(outputLines.join('\n\n')));
+}
+
+// ── Catchwords Formatter ──
+function processCatchwords(rawHtml) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(rawHtml, 'text/html');
+  const paragraphs = Array.from(doc.body.querySelectorAll('p'))
+    .filter(p => p.textContent.replace(/[\u00A0\u200B]/g, '').trim().length > 0);
+
+  if (paragraphs.length === 0) return rawHtml;
+
+  const outputLines = [];
+  let catchwordsLines = [];
+  let bodyLines = [];
+  let inCatchwords = true;
+
+  // ── FIX 1: Subject detection regex now allows hyphens (e.g. "Undang-Undang Jenayah") ──
+  // A catchword header starts with a capitalised word (with optional hyphens/spaces)
+  // followed by a colon then whitespace/newline.
+  const subjectColonRe = /^([A-Z][A-Za-z\u00C0-\u024F\s\-]{0,80}?):\s/;
+
+  // ── FIX 2: Sub-list items (a), (b), (c)… get merged into the preceding paragraph ──
+  // They are identified as paragraphs whose text begins with a lower-case letter
+  // list marker inside parentheses: (a), (b), (c), (i), (ii), etc.
+  const isSubListItem = (text) => /^\([a-z]+\)/.test(text.trim());
+
+  for (let i = 0; i < paragraphs.length; i++) {
+    const p = paragraphs[i];
+    const rawText = p.textContent.trim();
+    const isCatchwordPara = inCatchwords && subjectColonRe.test(rawText);
+
+    if (isCatchwordPara) {
+      catchwordsLines.push(p);
+    } else {
+      inCatchwords = false;
+      bodyLines.push(p);
+    }
+  }
+
+  // ── Merge sub-list items into their preceding body paragraph ──
+  // Walk bodyLines in reverse so splice indices stay stable.
+  for (let i = bodyLines.length - 1; i >= 1; i--) {
+    const text = bodyLines[i].textContent.trim();
+    if (isSubListItem(text)) {
+      // Append this paragraph's innerHTML (with a leading space) to the previous one
+      const prevInner = bodyLines[i - 1].innerHTML.trim();
+      const thisInner = bodyLines[i].innerHTML.trim();
+      bodyLines[i - 1].innerHTML = prevInner + ' ' + thisInner;
+      bodyLines.splice(i, 1);
+    }
+  }
+
+  // ── Build CATCHWORDS block ──
+  if (catchwordsLines.length > 0) {
+    outputLines.push('<CATCHWORDS>');
+    for (const p of catchwordsLines) {
+      let inner = p.innerHTML.trim();
+
+      // Rule 3: em-dash normalisation
+      inner = inner.replace(/\u2014/g, '&#8212;').replace(/—/g, '&#8212;');
+
+      // Rule 1: Wrap subject before first colon in <b><SUBJECT_INDEX>…</SUBJECT_INDEX>:</b>
+      // The subject can contain hyphens (e.g. "Undang-Undang Jenayah").
+      // We match: optional leading HTML tags, then the subject text, then ":"
+      inner = inner.replace(
+        /^((?:<[^>]+>)*?)([A-Z][A-Za-z\u00C0-\u024F\s\-]{0,80}?)((?:<\/[^>]+>)*):/,
+        (match, openTags, subject, closeTags) => {
+          return `${openTags}<b><SUBJECT_INDEX>${subject.trim()}</SUBJECT_INDEX>:</b>`;
+        }
+      );
+
+      // Rule 2: Wrap entire <p> content in <i>
+      outputLines.push(`<p><i>${inner}</i></p>`);
+      outputLines.push('');
+    }
+    outputLines.push('</CATCHWORDS>');
+    outputLines.push('');
+  }
+
+  // ── Build body paragraphs ──
+  for (const p of bodyLines) {
+    let inner = p.innerHTML.trim();
+
+    // Rule 3: em-dash normalisation
+    inner = inner.replace(/\u2014/g, '&#8212;').replace(/—/g, '&#8212;');
+
+    // Rule 4: Bold "Held" OR its Malay equivalent "Diputuskan" only when it is
+    // the very first word of the paragraph.
+    inner = inner.replace(/^(Held|Diputuskan)\b/, '<b>$1</b>');
+
+    // Rule 5: Bold opening numbered items like (1), (2)… and ensure one space after.
+    // FIX: ensure there is exactly one space between the bold tag and the following text.
+    inner = inner.replace(/^\((\d+)\)\s*/, '<b>($1)</b> ');
+
+    outputLines.push(`<p>${inner}</p>`);
+    outputLines.push('');
+  }
+
+  return outputLines.join('\n').trimEnd();
+}
+
+function formatCatchwords() {
+  const input = document.getElementById('inputText').value.trim();
+  if (!input) { showToast('Please paste some HTML first', 'error'); return; }
+
+  const btn = document.getElementById('catchwordsBtn');
+  btn.disabled = true;
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('outputText').style.display = 'none';
+  document.getElementById('skeletonLoader').style.display = 'block';
+  setStatus('processing', 'Formatting catchwords…');
+
+  setTimeout(() => {
+    try {
+      const result = processCatchwords(input);
+
+      outputContent = result;
+      const outEl = document.getElementById('outputText');
+      outEl.textContent = result;
+      outEl.style.display = 'block';
+      document.getElementById('outputCount').textContent = result.length.toLocaleString() + ' chars';
+
+      setStatus('done', 'Catchwords formatted');
+      showToast('Catchwords formatted!');
+    } catch (err) {
+      setStatus('error', 'Error');
+      document.getElementById('emptyState').style.display = '';
+      showToast('Error: ' + err.message, 'error');
+      console.error(err);
+    } finally {
+      document.getElementById('skeletonLoader').style.display = 'none';
+      btn.disabled = false;
+    }
+  }, 80);
+}
+
+// ── Add Paragraph Numbers ──
+function addParagraphNumbers() {
+  const input = document.getElementById('inputText').value.trim();
+  if (!input) { showToast('Please paste some HTML first', 'error'); return; }
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(input, 'text/html');
+  const paragraphs = Array.from(doc.body.querySelectorAll('p'));
+
+  let counter = 1;
+  let firstParagraphDone = false;
+
+  for (const p of paragraphs) {
+    const text = p.textContent.trim();
+    if (!text) continue;
+
+    // Skip the first paragraph (it's the title)
+    if (!firstParagraphDone) {
+      firstParagraphDone = true;
+      continue;
+    }
+
+    // Skip short lines that look like headings (6 words or fewer, no period)
+    const wordCount = text.split(/\s+/).length;
+    if (wordCount <= 6 && !/[.]$/.test(text)) continue;
+
+    // Add the number
+    p.innerHTML = `<b>[${counter}]</b> ` + p.innerHTML.trim();
+    counter++;
+  }
+
+  const result = doc.body.innerHTML;
+  document.getElementById('inputText').value = result;
+  updateCount();
+  showToast('Paragraph numbers added!');
 }
 
 // ── Add Blockquote Level ──
@@ -669,50 +948,137 @@ function addBlockquoteLevels() {
   }, 80);
 }
 
-// ── Touch Up Formatter ──
+// ── NEW HELPER: Sequence Main Paragraphs ──
+function sequenceMainParagraphs(html) {
+  // 1. Mask ALL blockquote regions including nested ones — work inside-out
+  //    by repeatedly masking the innermost blockquote (containing no nested
+  //    blockquote) until none remain. This guarantees no content inside ANY
+  //    blockquote at any depth is ever seen by the renumberer.
+  const bqMap = new Map();
+  let maskedHtml = html;
+  let prev;
+  do {
+    prev = maskedHtml;
+    maskedHtml = maskedHtml.replace(/<blockquote>((?!<blockquote>)[\s\S])*?<\/blockquote>/gi, m => {
+      const id = '\x00BQ' + bqMap.size + '\x00';
+      bqMap.set(id, m);
+      return id;
+    });
+  } while (maskedHtml !== prev);
+
+  // 2. Renumber ONLY [N]-bracket main paragraphs.
+  //    NEVER match bare "N." list items — those live inside blockquotes
+  //    and must never be touched.
+  //    Enforce strictly sequential numbering:
+  //      - First paragraph keeps its own number (anchors the sequence).
+  //      - Every subsequent paragraph is assigned currentNum + 1,
+  //        regardless of what the document says — this closes any gaps
+  //        caused by skipped numbers (e.g. [16],[17],[19] → [16],[17],[18]).
+  let currentNum = 0;
+  maskedHtml = maskedHtml.replace(
+    /(<p(?:\s[^>]*)?>\s*<b>\s*)\[\s*(\d+)\s*\](\s*<\/b>)/gi,
+    (match, open, numStr, close) => {
+      const docNum = parseInt(numStr, 10);
+      let assignedNum;
+      if (currentNum === 0) {
+        // First numbered paragraph: anchor the sequence to its own number
+        assignedNum = docNum;
+      } else {
+        // All subsequent paragraphs must be exactly currentNum + 1
+        assignedNum = currentNum + 1;
+      }
+      currentNum = assignedNum;
+      return `${open}[${assignedNum}]${close}`;
+    }
+  );
+
+  // 3. Restore masked blockquotes in reverse order so nested placeholders
+  //    resolve correctly (inner-most restored first, then outer).
+  const entries = Array.from(bqMap.entries()).reverse();
+  entries.forEach(([key, val]) => {
+    maskedHtml = maskedHtml.split(key).join(val);
+  });
+
+  return maskedHtml;
+}
+
 function processTouchUp(html) {
-  // 1. Fix Em dashes: Convert literal em dash to &#8212;
+  // 1. Fix Em dashes
   let result = html.replace(/—/g, '&#8212;');
 
-  // 2. Fix Blockquote & Level spacing: Collapse newlines/spaces immediately inside the tags
+  // 2. Fix Blockquote & Level spacing
   result = result.replace(/<blockquote>\s*/gi, '<blockquote>');
   result = result.replace(/\s*<\/blockquote>/gi, '</blockquote>');
   result = result.replace(/<LEVEL(\d+)>\s*/gi, '<LEVEL$1>');
   result = result.replace(/\s*<\/LEVEL(\d+)>/gi, '</LEVEL$1>');
 
-  // 3. Fix Section Headings
-  // First, completely STRIP any existing SPARA_TITLE tags globally to cleanly reset the state.
-  result = result.replace(/<\/?SPARA_TITLE>/gi, '');
+  // 3. MASK existing SPARA_TITLEs and Tables so they are ignored by the replacer
+  const sparaMap = new Map();
+  result = result.replace(/<SPARA_TITLE[\s\S]*?<\/SPARA_TITLE>/gi, m => {
+     const id = '###SPARA'+Math.random()+'###';
+     sparaMap.set(id, m);
+     return id;
+  });
 
-  // Helper logic to evaluate and wrap valid bold headings
+  const tableMap = new Map();
+  result = result.replace(/<table[\s\S]*?<\/table>/gi, m => {
+     const id = '###TABLE'+Math.random()+'###';
+     tableMap.set(id, m);
+     return id;
+  });
+
   const headingReplacer = (pMatch, inner) => {
-    const cleanText = inner.replace(/<[^>]*>/g, '').trim().toUpperCase();
-    const rawText = inner.trim().toUpperCase();
-    
-    // Ignore main document titles and reference headers
-    if (cleanText === 'JUDGMENT' || cleanText === 'PENGHAKIMAN' || cleanText === 'AWARD' || cleanText.startsWith('REFERENCE') || cleanText.startsWith('RUJUKAN')) {
-      return pMatch; 
-    }
-    
-    // Ignore numbered paragraphs (e.g., "[3]", "1.", "(1)")
-    if (/^\[?\d+\]?/.test(cleanText) || /^\(?\d+\)?/.test(cleanText)) {
-      return pMatch;
+    const cleanText = inner.replace(/<[^>]*>/g, '').trim();
+    const upperText = cleanText.toUpperCase();
+
+    // Skip structural / numbering / name paragraphs
+    if (!cleanText) return pMatch;
+    if (upperText === 'JUDGMENT' || upperText === 'PENGHAKIMAN' || upperText === 'AWARD' ||
+        upperText.startsWith('REFERENCE') || upperText.startsWith('RUJUKAN')) return pMatch;
+    if (/^\[?\d+\]?/.test(cleanText) || /^\(?\d+\)?/.test(cleanText)) return pMatch;
+    if (inner.includes('<NAME>')) return pMatch;
+
+    // Qualify as a section heading if EITHER:
+    //   (a) the text is entirely uppercase (original behaviour), OR
+    //   (b) the text is mixed/title-case but reads as a standalone heading:
+    //       — no full stop mid-sentence (not prose), AND
+    //       — short enough to be a heading (≤ 120 chars)
+    const isAllCaps = cleanText === upperText && /[A-Z]/.test(cleanText);
+    const isMixedHeading = !isAllCaps &&
+                           cleanText.length <= 120 &&
+                           !/[a-z]\.\s+[A-Z]/.test(cleanText) &&   // no mid-sentence full-stop
+                           !/[a-z]{3,}\s+[a-z]{3,}\s+[a-z]{3,}/.test(cleanText); // not running prose
+
+    if (!isAllCaps && !isMixedHeading) return pMatch;
+
+    const markerMatch = inner.trim().match(/^(\(?[a-zA-Z0-9]{1,4}\)|[a-zA-Z0-9]{1,4}\.|\[\d+\])?(\s*)([\s\S]*)$/);
+    let marker    = markerMatch && markerMatch[1] ? markerMatch[1] : '';
+    let space     = markerMatch && markerMatch[2] ? markerMatch[2] : '';
+    let restOfText = markerMatch && markerMatch[3] ? markerMatch[3] : inner.trim();
+
+    // For ALL-CAPS text apply title-case conversion; for already-mixed text keep as-is
+    let displayText;
+    if (isAllCaps) {
+      displayText = restOfText.replace(/(<[^>]+>)|(&[a-zA-Z0-9#]+;)|([^<&]+)/g, (match, tag, entity, text) => {
+        if (tag) return tag;
+        if (entity) return entity;
+        if (text) {
+          return text.toLowerCase().replace(/\w\S*/g, (txt) => {
+            return txt.split('-').map(part => part.charAt(0).toUpperCase() + part.substring(1)).join('-');
+          });
+        }
+        return match;
+      });
+    } else {
+      displayText = restOfText;
     }
 
-    // Ignore Judge identifiers (ends with a colon OR contains the raw <NAME> tag)
-    if (rawText.includes('<NAME>') || cleanText.endsWith(':')) {
-      return pMatch;
-    }
-    
-    // Apply the SPARA_TITLE wrapper to valid headings
-    return `<SPARA_TITLE><p><b>${inner.trim()}</b></p></SPARA_TITLE>`;
+    return `<SPARA_TITLE><p><b>${marker}${space}${displayText}</b></p></SPARA_TITLE>`;
   };
 
-  // Check if we are dealing with raw XML containing the <JUDGMENT> tag
   const hasJudgmentTag = /<JUDGMENT\b[^>]*>/i.test(result);
 
   if (hasJudgmentTag) {
-    // RAW XML STATE: Slicing string strictly inside <JUDGMENT> boundaries
     const startMatch = result.match(/<JUDGMENT\b[^>]*>/i);
     const startIndex = startMatch.index + startMatch[0].length;
     let beforeJudgment = result.substring(0, startIndex);
@@ -727,17 +1093,166 @@ function processTouchUp(html) {
       afterJudgment = remaining.substring(endMatch.index);
     }
 
-    // Apply strictly inside the sliced judgment body
     judgmentBody = judgmentBody.replace(/<p>\s*<b>((?:(?!<\/?p\b)[\s\S])*?)<\/b>\s*<\/p>/gi, headingReplacer);
+    judgmentBody = sequenceMainParagraphs(judgmentBody); // <-- NEW SEQUENCER RULE APPLIED
+    judgmentBody = applyBlockSpacing(judgmentBody);
+    judgmentBody = applyGlobalCurrencyFormat(judgmentBody);
+    judgmentBody = applyCitationFormat(judgmentBody); 
+
     result = beforeJudgment + judgmentBody + afterJudgment;
     
   } else {
-    // FORMATTED HTML STATE: The <JUDGMENT> tag and metadata were already removed by 'Format Document'. 
-    // It is safe to run the replacer globally on the entire document.
     result = result.replace(/<p>\s*<b>((?:(?!<\/?p\b)[\s\S])*?)<\/b>\s*<\/p>/gi, headingReplacer);
+    result = sequenceMainParagraphs(result); // <-- NEW SEQUENCER RULE APPLIED
+    result = applyBlockSpacing(result);
+    result = applyGlobalCurrencyFormat(result);
+    result = applyCitationFormat(result); 
   }
 
+  // 4. UNMASK SPARA_TITLE and TABLES so they return exactly as they were
+  tableMap.forEach((val, key) => { result = result.replace(key, val); });
+  sparaMap.forEach((val, key) => { result = result.replace(key, val); });
+
   return result;
+}
+
+// ── NEW HELPER: Case Citation Format ──
+function applyCitationFormat(html) {
+  // Safe replacer that skips HTML tags and edits only plain text
+  return html.replace(/(<[^>]+>)|([^<]+)/g, (match, tag, text) => {
+    if (tag) return match;
+    
+    let newText = text;
+    
+    // 1. Fix " v " or " lwn " to " v. " and " lwn. "
+    // (Matches lowercase 'v' or any case 'lwn' surrounded by spaces, not followed by a dot)
+    newText = newText.replace(/\s+(v|lwn|Lwn|LWN)(?!\.)\s+/g, (m, p1) => ` ${p1.toLowerCase()}. `);
+    
+    // 2. Fix malformed bracketed years: (1986], [1986), (1986) -> [1986]
+    newText = newText.replace(/[\(\[](\d{4})[\)\]]/g, '[$1]');
+    
+    // 3. Fix missing space before journal abbreviation: 1MLJ -> 1 MLJ
+    newText = newText.replace(/\b(\d+)([a-zA-Z]+)\b/g, (m, num, letters) => {
+      const lower = letters.toLowerCase();
+      // Exclude ordinal indicators to protect phrasing like "1st metacarpal"
+      if (['st', 'nd', 'rd', 'th'].includes(lower)) {
+        return m; 
+      }
+      return `${num} ${letters}`;
+    });
+    
+    return newText;
+  });
+}
+
+// ── UPDATED: Global Currency Formatter ──
+function applyGlobalCurrencyFormat(html) {
+  // Safe replacer that skips HTML tags and targets RM amounts in plain text
+  return html.replace(/(<[^>]+>)|(RM\s*([\d\.,]*\d))/gi, (match, tag, rmFull, numberPart) => {
+    if (tag) return match; // Return HTML tags untouched
+    
+    // Remove existing commas to normalize the string
+    let cleanNum = numberPart.replace(/,/g, '');
+    let parts = cleanNum.split('.');
+    
+    let intPart, decPart;
+    
+    // Logic to distinguish between thousands separator and decimal points
+    if (parts.length > 1) {
+       let lastPart = parts[parts.length - 1];
+       // If there are multiple dots (e.g., 6.000.00) OR the last part isn't exactly 3 digits (e.g., 6.50)
+       if (parts.length > 2 || lastPart.length !== 3) {
+           decPart = parts.pop();
+           intPart = parts.join(''); 
+       } else {
+           // e.g., 6.000 -> treat the dot as a thousands separator
+           intPart = parts.join('');
+           decPart = '00';
+       }
+    } else {
+       intPart = parts[0];
+       decPart = '00';
+    }
+    
+    const intVal = parseInt(intPart, 10);
+    if (isNaN(intVal)) return match;
+    
+    // Force exactly two decimal places
+    decPart = decPart.padEnd(2, '0').slice(0, 2);
+    
+    // Re-apply standard Malaysian comma thousands separators
+    const intFormatted = intVal.toLocaleString('en-MY');
+    
+    return `RM${intFormatted}.${decPart}`;
+  });
+}
+
+// ── HELPER: Block Spacing ──
+function applyBlockSpacing(html) {
+  const parts = html.split(/(<blockquote[\s\S]*?<\/blockquote>)/gi);
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 2 === 0) { 
+      parts[i] = parts[i].replace(/(<\/p>|<\/SPARA_TITLE>)\s*(?=<p>|<SPARA_TITLE>)/gi, '$1\n\n');
+    }
+  }
+  let finalHtml = parts.join('');
+  finalHtml = finalHtml.replace(/(<\/p>|<\/SPARA_TITLE>)\s*(?=<blockquote>)/gi, '$1\n\n');
+  finalHtml = finalHtml.replace(/(<\/blockquote>)\s*(?=<p>|<SPARA_TITLE>)/gi, '$1\n\n');
+  return finalHtml;
+}
+
+// ── HELPER: Auto-Number Main Paragraphs ──
+function applyMainParagraphNumbering(textString) {
+  let bqLevel = 0;
+  let sparaLevel = 0;
+  let pCounter = 1;
+
+  const tokenRegex = /(<\/?blockquote[^>]*>)|(<\/?SPARA_TITLE[^>]*>)|(<p(?: [^>]*)?>)([\s\S]*?)(<\/p>)/gi;
+
+  return textString.replace(tokenRegex, (match, bqTag, sparaTag, pOpen, pContent, pClose) => {
+    if (bqTag) {
+      if (!bqTag.startsWith('</')) bqLevel++;
+      else bqLevel = Math.max(0, bqLevel - 1);
+      return match;
+    }
+    if (sparaTag) {
+      if (!sparaTag.startsWith('</')) sparaLevel++;
+      else sparaLevel = Math.max(0, sparaLevel - 1);
+      return match;
+    }
+    if (pOpen) {
+      if (bqLevel === 0 && sparaLevel === 0) {
+        const textOnly = pContent.replace(/<[^>]*>/g, '').trim();
+        const upperText = textOnly.toUpperCase();
+
+        if (!textOnly ||
+            upperText === 'JUDGMENT' ||
+            upperText === 'PENGHAKIMAN' ||
+            upperText === 'AWARD' ||
+            upperText.startsWith('REFERENCE') ||
+            upperText.startsWith('RUJUKAN')) {
+          return match;
+        }
+
+        const hasNumbering = /^(?:<b>\s*)?(?:\[\d+\]|\d+\.)\s*(?:<\/b>\s*)?/i.test(pContent.trim());
+
+        if (!hasNumbering) {
+          const numberedMatch = `${pOpen}<b>[${pCounter}]</b> ${pContent.trim()}${pClose}`;
+          pCounter++;
+          return numberedMatch;
+        } else {
+          let fixedContent = pContent.trim().replace(/^(?:<b>\s*)?(?:\[(\d+)\]|(\d+)\.)\s*(?:<\/b>\s*)?/i, (m, g1, g2) => {
+            const num = g1 || g2;
+            pCounter = parseInt(num, 10) + 1; 
+            return `<b>[${num}]</b> `; 
+          });
+          return `${pOpen}${fixedContent}${pClose}`;
+        }
+      }
+      return match;
+    }
+    return match;
+  });
 }
 
 // ── Touch Up UI Handler ──
@@ -782,10 +1297,1526 @@ function touchUpDocument() {
   }, 80); // Small delay to allow UI to render the skeleton loader
 }
 
+// ── Dedicated Numbering Handler ──
+function applyNumberingOnly() {
+  // Use existing output if available, otherwise use raw input
+  let targetText = outputContent ? outputContent : document.getElementById('inputText').value.trim();
+  
+  if (!targetText) { 
+    showToast('Please load or format some HTML first', 'error'); 
+    return; 
+  }
+
+  const btn = document.getElementById('numberBtn');
+  if (btn) btn.disabled = true;
+  
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('outputText').style.display = 'none';
+  document.getElementById('skeletonLoader').style.display = 'block';
+  setStatus('processing', 'Applying paragraph numbers…');
+
+  setTimeout(() => {
+    try {
+      let result = targetText;
+      const hasJudgmentTag = /<JUDGMENT\b[^>]*>/i.test(result);
+
+      // We use the same smart logic to only number inside the <JUDGMENT> block if it exists
+      if (hasJudgmentTag) {
+        const startMatch = result.match(/<JUDGMENT\b[^>]*>/i);
+        const startIndex = startMatch.index + startMatch[0].length;
+        let beforeJudgment = result.substring(0, startIndex);
+        let remaining = result.substring(startIndex);
+
+        let judgmentBody = remaining;
+        let afterJudgment = "";
+
+        const endMatch = remaining.match(/<\/JUDGMENT>/i);
+        if (endMatch) {
+          judgmentBody = remaining.substring(0, endMatch.index);
+          afterJudgment = remaining.substring(endMatch.index);
+        }
+
+        judgmentBody = applyMainParagraphNumbering(judgmentBody);
+        result = beforeJudgment + judgmentBody + afterJudgment;
+        
+      } else {
+        result = applyMainParagraphNumbering(result);
+      }
+      
+      outputContent = result;
+      const outEl = document.getElementById('outputText');
+      outEl.textContent = result;
+      outEl.style.display = 'block';
+      document.getElementById('outputCount').textContent = result.length.toLocaleString() + ' chars';
+
+      setStatus('done', 'Numbering applied');
+      showToast('Main paragraph numbering added!');
+    } catch (err) {
+      setStatus('error', 'Error');
+      document.getElementById('emptyState').style.display = '';
+      showToast('Error: ' + err.message, 'error');
+      console.error(err);
+    } finally {
+      document.getElementById('skeletonLoader').style.display = 'none';
+      if (btn) btn.disabled = false;
+    }
+  }, 80); 
+}
+
+// ── Table Conversion Logic ──
+function openTableModal() {
+  document.getElementById('tableModal').classList.add('show');
+  document.getElementById('tableTsvInput').focus();
+}
+
+function closeTableModal() {
+  document.getElementById('tableModal').classList.remove('show');
+  // Use innerHTML instead of value for the new div
+  document.getElementById('tableHtmlInput').innerHTML = '';
+}
+
+function insertTable() {
+  const inputArea = document.getElementById('tableHtmlInput');
+  const rawHtml = inputArea.innerHTML;
+  const rawText = inputArea.innerText; 
+
+  if (!rawText.trim()) {
+    showToast('Please paste some table data first', 'error');
+    return;
+  }
+
+  let tableHtml = `<blockquote>\n<table border="1" bordercolor="#000000" cellpadding="5" cellspacing="0" width="95%">\n`;
+  let parsedRows = [];
+  let expectedColumns = 0; 
+
+  // ── HELPER: Extract text but PRESERVE line breaks from MS Word ──
+  const extractCellText = (cell) => {
+    let clone = cell.cloneNode(true);
+    clone.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+    clone.querySelectorAll('p, div').forEach(p => p.appendChild(document.createTextNode('\n')));
+    
+    let text = clone.textContent.replace(/[\u00A0\t]+/g, ' '); 
+    text = text.replace(/ +/g, ' '); 
+    return text.replace(/\n\s*\n/g, '\n').trim(); 
+  };
+
+  // ── HELPER: Semantic Legal Table Detection ──
+  const isContinuationRow = (rowData, expectedCols) => {
+    if (rowData[0] === '' || rowData.length < expectedCols) return true;
+    if (/^[a-z]/.test(rowData[0])) return true;
+    if (rowData[1]) {
+      let col2 = rowData[1];
+      let hasCitation = /\b(?:v|lwn)\b/i.test(col2) || /PIR/.test(col2);
+      let hasCurrency = /(?:RM)?\s*\d+[,\d]*\.\d{2}/i.test(col2);
+      if (hasCitation && !hasCurrency) return true;
+    }
+    return false;
+  };
+
+  // 1. Parse the clipboard
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(rawHtml, 'text/html');
+  
+  // THE FIX: Grab ALL tables in the clipboard, not just the first one
+  const pastedTables = doc.querySelectorAll('table');
+
+  if (pastedTables.length > 0) {
+    // ─── PATH A: RICH HTML EXTRACTION (MULTI-TABLE STITCHING) ───
+    
+    // Loop through every table found in the pasted data
+    pastedTables.forEach(pastedTable => {
+      const rows = pastedTable.querySelectorAll('tr');
+      
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td, th');
+        if (cells.length === 0) return;
+
+        let rowData = Array.from(cells).map(cell => extractCellText(cell));
+        if (rowData.every(text => text === '')) return; // Skip totally blank MS Word rows
+
+        if (expectedColumns === 0) expectedColumns = rowData.length;
+
+        if (parsedRows.length > 0 && isContinuationRow(rowData, expectedColumns)) {
+           let lastRow = parsedRows[parsedRows.length - 1];
+           let offset = (rowData[0] !== '') ? expectedColumns - rowData.length : 0;
+           if (rowData[0] !== '' && rowData.length === 1 && expectedColumns >= 3) offset = 1;
+
+           rowData.forEach((colText, idx) => {
+              if (colText) {
+                 let targetIdx = idx + offset;
+                 let existing = lastRow.cells[targetIdx] || "";
+                 
+                 // Deduplicate overlapping brackets like '}'
+                 if (existing.trim() === colText.trim() && colText.trim() === '}') return;
+
+                 if (targetIdx === 0) {
+                    lastRow.cells[targetIdx] = existing ? (existing + " " + colText) : colText;
+                 } else {
+                    lastRow.cells[targetIdx] = existing ? (existing + "\n" + colText) : colText;
+                 }
+              }
+           });
+        } else {
+           // Skip header rows if we are stitching a second table and already have a header
+           const isHeaderNode = row.querySelector('th') !== null;
+           if (isHeaderNode && parsedRows.length > 0) return;
+
+           parsedRows.push({
+              isHeader: isHeaderNode || parsedRows.length === 0,
+              cells: rowData
+           });
+           expectedColumns = Math.max(expectedColumns, rowData.length);
+        }
+      });
+    });
+
+  } else {
+    // ─── PATH B: PLAIN TEXT TSV FALLBACK ───
+    const lines = rawText.split('\n');
+    lines.forEach(line => {
+      if (line.replace(/[\u00A0\s]+/g, '').length === 0) return; 
+
+      let columns = line.split(/\t/);
+      if (columns.length === 1) columns = line.split(/\s{2,}/);
+      let rowData = columns.map(c => c.trim());
+
+      if (expectedColumns === 0) expectedColumns = rowData.length;
+
+      if (parsedRows.length > 0 && isContinuationRow(rowData, expectedColumns)) {
+        let lastRow = parsedRows[parsedRows.length - 1];
+        let offset = (rowData[0] !== '') ? expectedColumns - rowData.length : 0;
+        if (rowData[0] !== '' && rowData.length === 1 && expectedColumns >= 3) offset = 1;
+
+        rowData.forEach((colText, idx) => {
+          if (colText) {
+            let targetIdx = idx + offset;
+            let existing = lastRow.cells[targetIdx] || "";
+            if (existing.trim() === colText.trim() && colText.trim() === '}') return;
+
+            if (targetIdx === 0) {
+              lastRow.cells[targetIdx] = existing ? (existing + " " + colText) : colText;
+            } else {
+              lastRow.cells[targetIdx] = existing ? (existing + "\n" + colText) : colText;
+            }
+          }
+        });
+      } else {
+        parsedRows.push({
+          isHeader: parsedRows.length === 0,
+          cells: rowData
+        });
+        expectedColumns = Math.max(expectedColumns, rowData.length);
+      }
+    });
+  }
+
+  // 2. Render HTML
+  parsedRows.forEach((row, rowIndex) => {
+    const isFirstRow = rowIndex === 0;
+    tableHtml += `  <tr>\n`;
+    row.cells.forEach((text, index) => {
+      let width = index === 0 ? "10%" : (index === 1 ? "60%" : (index === 2 ? "30%" : Math.floor(100 / row.cells.length) + "%"));
+      tableHtml += formatTableCell(text, width, isFirstRow, row.isHeader);
+    });
+    tableHtml += `  </tr>\n`;
+  });
+
+  tableHtml += `</table>\n</blockquote>\n`;
+
+  // 3. Inject
+  const mainInput = document.getElementById('inputText');
+  const startPos = mainInput.selectionStart;
+  const endPos = mainInput.selectionEnd;
+  const currentVal = mainInput.value;
+  
+  mainInput.value = currentVal.substring(0, startPos) + tableHtml + currentVal.substring(endPos, currentVal.length);
+  mainInput.selectionStart = mainInput.selectionEnd = startPos + tableHtml.length;
+  
+  closeTableModal();
+  updateCount();
+  showToast('Table cleaned & inserted!');
+}
+
+// ── Helper function: Splits preserved newlines into <p> tags and formats RM ──
+function formatTableCell(text, width, isFirstRow, isHeader) {
+  if (!text) return `    <td align="left" valign="top" width="${width}"></td>\n`;
+
+  // Split by the newlines we preserved earlier
+  let parts = text.split('\n');
+  let innerHtml = '';
+
+  parts.forEach(part => {
+    let formattedPart = part.trim();
+    if (!formattedPart) return;
+
+    // Apply currency formatting ONLY if the line is purely an amount
+    if (!isFirstRow && !isHeader) {
+      const numMatch = formattedPart.match(/^(?:RM\s*)?(\d{1,3}(?:,\d{3})*|\d+)(?:\.(\d+))?$/i);
+      if (numMatch) {
+        const plainNum = numMatch[1].replace(/,/g, '');
+        const intVal = parseInt(plainNum, 10);
+        if (!isNaN(intVal)) {
+          let dec = numMatch[2] !== undefined ? numMatch[2].padEnd(2, '0').slice(0, 2) : '00';
+          formattedPart = `RM${intVal.toLocaleString('en-MY')}.${dec}`;
+        }
+      }
+    }
+
+    // Wrap each separated line in its own <p> tag
+    if (isFirstRow || isHeader) {
+      innerHtml += `<p><b>${formattedPart}</b></p>\n`;
+    } else {
+      innerHtml += `<p>${formattedPart}</p>\n`;
+    }
+  });
+
+  // Remove the trailing newline from innerHtml for cleaner source code
+  innerHtml = innerHtml.trimEnd();
+
+  return `    <td align="left" valign="top" width="${width}">\n${innerHtml}\n    </td>\n`;
+}
+
+// ── OLLAMA LOCAL AI DOCX EXTRACTION LOGIC ──
+// Requires Ollama running locally: https://ollama.com
+// Recommended model: ollama pull qwen2.5:14b  (good JSON accuracy)
+// Change OLLAMA_MODEL below if you use a different model.
+
+const OLLAMA_MODEL = 'qwen2.5:14b'; // <--- CHANGE THIS to your pulled model
+const OLLAMA_URL   = 'http://localhost:11434/api/generate';
+
+async function processDocxWithOllama(file) {
+  setStatus('processing', 'Reading DOCX...');
+  
+  const reader = new FileReader();
+  reader.onload = async function(event) {
+    const arrayBuffer = event.target.result;
+    
+    try {
+      // 1. Extract raw text from DOCX using Mammoth
+      const result = await mammoth.extractRawText({arrayBuffer: arrayBuffer});
+      const rawText = result.value;
+      
+      // 2. Send text to local Ollama
+      setStatus('processing', 'AI Extracting Metadata...');
+      await fetchMetadataFromOllama(rawText, file.name);
+      
+    } catch (err) {
+      console.error(err);
+      showToast('Error reading DOCX file', 'error');
+      setStatus('error', 'File Error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+async function fetchMetadataFromOllama(documentText, fileName) {
+
+  // ── Language detection ──
+  let isEnglish = true;
+  if (fileName.toLowerCase().includes(' lwn. ')) isEnglish = false;
+  else if (fileName.toLowerCase().includes(' v. ')) isEnglish = true;
+  else {
+    // Some MLRA judgments header the decision simply "PENGHAKIMAN" (no "ALASAN" prefix),
+    // so checking only the exact phrase "ALASAN PENGHAKIMAN" missed those files and
+    // silently defaulted them to English. Look for "PENGHAKIMAN" as a standalone
+    // heading-style token (not as a substring of an English word) and corroborate
+    // with other unambiguous Malay-only markers before committing to Malay.
+    const hasPenghakiman = /\bPENGHAKIMAN\b/i.test(documentText);
+    const hasEnglishHeader = /\bGROUNDS\s+OF\s+(?:JUDGMENT|DECISION)\b/i.test(documentText) || /\bJUDGMENT\b/i.test(documentText.slice(0, 4000));
+    const malayMarkerCount = [
+      /\blwn\.?\b/i,
+      /\bKaunsel\s*:/i,
+      /\bBagi\s*pihak\b/i,
+      /\bPerayu\b/i,
+      /\bResponden\b/i,
+      /\bHakim\s+bicara\b/i,
+    ].reduce((count, re) => count + (re.test(documentText) ? 1 : 0), 0);
+
+    if (hasPenghakiman && !hasEnglishHeader) isEnglish = false;
+    else if (malayMarkerCount >= 2) isEnglish = false;
+    else isEnglish = !documentText.includes('ALASAN PENGHAKIMAN');
+  }
+
+  // ── Focused text windows (top + bottom of document) ──
+  const topText    = documentText.substring(0, 3000);
+  const bottomText = documentText.substring(documentText.length - 3000);
+  const analyzedText = `--- TOP OF DOCUMENT ---\n${topText}\n\n--- BOTTOM OF DOCUMENT ---\n${bottomText}`;
+
+  // ── Strict JSON schema description ──
+  // Written out in plain language so smaller models follow it reliably.
+  // ── Detect MLRA file format for prompt tuning ──
+  const isMLRAFormat = /\[?\d{4}\]?\s+\d+\s+[A-Za-z]+\s+\d+/.test(fileName);
+
+  const schemaJudgeName = isMLRAFormat
+    ? "<comma-separated list of ALL judges' core names — strip ALL honorifics for each. E.g. \"Mohd Hishamudin Md Yunus, Linton Albert, Umi Kalthum Abdul Majid\">"
+    : "<judge's core name only — strip ALL honorifics (Dato, Datuk, Tan Sri, Haji, etc.) and do NOT include their title>";
+  const schemaJudgeTitle = isMLRAFormat
+    ? "<the shared judicial title abbreviation that appears after ALL the judges' names — return it EXACTLY as written, e.g. \"JJCA\", \"FCJ\", \"JCA\", \"JJFC\". Do NOT expand it.>"
+    : "<exact judicial title from below the signature, e.g. 'Judge', 'Hakim', 'Judicial Commissioner', 'Pesuruhjaya Kehakiman'>";
+
+  const schemaJudgmentNumber = isMLRAFormat
+    ? "<full case number in square brackets, retrieved EXACTLY as written in the document — do NOT translate the case-type label (e.g. keep 'Criminal Appeal No' as-is even in a Malay-language MLRA judgment; do not convert it to 'Rayuan Jenayah No'). E.g. [Criminal Appeal No: B-05-100-05-2015]>"
+    : "<full case number in square brackets, e.g. [Civil Suit No: WA-22NCvC-12-01/2023] for English or [Guaman Sivil No: WA-22NCvC-12-01/2023] for Malay>";
+
+  const schemaDescription = `
+Return a JSON object with EXACTLY these keys. No extra keys. No markdown fences.
+
+{
+  "judgmentName": "<PLAINTIFF(S) v./lwn. DEFENDANT(S)> — all caps except connector. Use 'v.' for English, 'lwn.' for Malay. Omit any 'Lain-lain orang yang tidak diketahui' party.",
+  "judgmentNumber": "${schemaJudgmentNumber}",
+  "courtType": "<court name and city, e.g. 'High Court of Malaya, Kuala Lumpur' or 'Mahkamah Tinggi Malaya, Kuala Lumpur'. Remove prepositions 'of' / 'di' before the city.>",
+  "judgeName": "${schemaJudgeName}",
+  "judgeTitle": "${schemaJudgeTitle}",
+  "date": "<judgment date matching document language, e.g. '21 June 2022' for English or '21 Jun 2022' for Malay>",
+  "plaintiffs": ["<Name [IC No: ] or Name [Company No: ]> — one string per plaintiff, combine name and ID, exclude unknown parties"],
+  "defendants": ["<Name [IC No: ] or Name [Company No: ]> — one string per defendant, combine name and ID, exclude unknown parties"],
+  "counsels": [
+    {
+      "role": "<party role word only — strip Solicitors/Counsel/Peguam prefixes. Return just the role noun, e.g. 'Respondent', 'Appellant', 'Plaintiff', 'Defendant', 'Perayu', 'Responden', 'Plaintif', 'Defendan'>,"
+      "name": "<lawyer full name, or null if none named>",
+      "firm": "${isMLRAFormat ? "<law firm name, KEEP the leading M/s, Messrs, or Tetuan prefix exactly as written in the document — do not strip or translate it>" : "<law firm name, strip only leading M/s, Messrs, Tetuan prefix>"}"
+    }
+  ]
+}`;
+
+  // ── Few-shot example to anchor the model's output format ──
+  // A concrete before/after example dramatically improves accuracy on small models.
+  const fewShotExample = `
+EXAMPLE INPUT (fragment):
+  BETWEEN
+  AHMAD BIN HASSAN (IC No: 800101-14-5678)  ... PLAINTIFF
+  AND
+  SYARIKAT MAJU SDN BHD (Company No: 123456-W)  ... DEFENDANT
+  
+  Counsel for Plaintiff: Encik Rashpal Singh (M/s Rashpal & Associates)
+  Counsel for Defendant: Puan Noraini Binti Ali (Tetuan Noraini Partners)
+  
+  [Guaman Sivil No: BA-22A-12-03/2022]
+  Mahkamah Tinggi Malaya di Kuantan
+  6 Julai 2022
+  
+  HAKIM ZAKARIA BIN MOHD YUSOF
+  Hakim
+
+EXAMPLE OUTPUT:
+{
+  "judgmentName": "AHMAD BIN HASSAN lwn. SYARIKAT MAJU SDN BHD",
+  "judgmentNumber": "[Guaman Sivil No: BA-22A-12-03/2022]",
+  "courtType": "Mahkamah Tinggi Malaya, Kuantan",
+  "judgeName": "Zakaria Mohd Yusof",
+  "judgeTitle": "Hakim",
+  "date": "6 Julai 2022",
+  "plaintiffs": ["AHMAD BIN HASSAN [IC No: 800101-14-5678]"],
+  "defendants": ["SYARIKAT MAJU SDN BHD [Company No: 123456-W]"],
+  "counsels": [
+    {"role": "Peguam bagi Plaintif", "name": "Rashpal Singh", "firm": "Rashpal & Associates"},
+    {"role": "Peguam bagi Defendan", "name": "Noraini Ali", "firm": "Noraini Partners"}
+  ]
+}`;
+
+  // ── Additional MLRA few-shot example (panel judgment) ──
+  const mlraFewShotExample = !isMLRAFormat ? '' : (isEnglish ? `
+
+MLRA PANEL JUDGMENT EXAMPLE INPUT (fragment):
+  CORPORATE SPIRIT SDN BHD
+  v.
+  CHAW KOCK KAW @ CHOW KOK KOW
+  
+  Court of Appeal, Putrajaya
+  Mohd Hishamudin Md Yunus, Linton Albert, Umi Kalthum Abdul Majid JJCA
+  [Civil Appeal No: W-02-88-01-2012]
+  30 September 2016
+  
+  Counsel:
+  For the appellant: DP Vijandran (S Ramesh & T Selvadurai); M/s MP Samy & Co
+  For the respondent: Lam Wai Tze; M/s Lam Wai Tze & Co
+
+MLRA PANEL JUDGMENT EXAMPLE OUTPUT:
+{
+  "judgmentName": "CORPORATE SPIRIT SDN BHD v. CHAW KOCK KAW @ CHOW KOK KOW",
+  "judgmentNumber": "[Civil Appeal No: W-02-88-01-2012]",
+  "courtType": "Court of Appeal, Putrajaya",
+  "judgeName": "Mohd Hishamudin Md Yunus, Linton Albert, Umi Kalthum Abdul Majid",
+  "judgeTitle": "JJCA",
+  "date": "30 September 2016",
+  "plaintiffs": [],
+  "defendants": [],
+  "counsels": [
+    {"role": "appellant", "name": "DP Vijandran", "firm": "MP Samy & Co"},
+    {"role": "respondent", "name": "Lam Wai Tze", "firm": "Lam Wai Tze & Co"}
+  ]
+}` : `
+
+MLRA PANEL JUDGMENT EXAMPLE INPUT (fragment) — note the heading is bare "PENGHAKIMAN", not "ALASAN PENGHAKIMAN":
+  AHMAD BIN OMAR
+  lwn.
+  PENDAKWA RAYA
+  
+  Mahkamah Rayuan, Putrajaya
+  Mohtarudin Baki, Tengku Maimun Tuan Mat, Zakaria Sam HHMR
+  [Criminal Appeal No: B-05-100-05-2015]
+  10 Mac 2016
+  
+  Kaunsel:
+  Bagi pihak perayu: Ahmad Syafiq; Tetuan Azmi & Associates
+  Bagi pihak responden: Suhaila Mohd, TPR
+  
+  PENGHAKIMAN
+
+MLRA PANEL JUDGMENT EXAMPLE OUTPUT:
+{
+  "judgmentName": "AHMAD BIN OMAR lwn. PENDAKWA RAYA",
+  "judgmentNumber": "[Criminal Appeal No: B-05-100-05-2015]",
+  "courtType": "Mahkamah Rayuan, Putrajaya",
+  "judgeName": "Mohtarudin Baki, Tengku Maimun Tuan Mat, Zakaria Sam",
+  "judgeTitle": "HHMR",
+  "date": "10 Mac 2016",
+  "plaintiffs": [],
+  "defendants": [],
+  "counsels": [
+    {"role": "perayu", "name": "Ahmad Syafiq", "firm": "Tetuan Azmi & Associates"},
+    {"role": "responden", "name": "Suhaila Mohd", "firm": "TPR"}
+  ]
+}`);
+
+  // ── System prompt — explicit, rule-by-rule for smaller models ──
+  const systemPrompt = `You are an expert Malaysian legal document parser. Your task is to extract structured metadata from a Malaysian court judgment and return it as a single JSON object.
+
+STRICT RULES:
+1. Output ONLY raw JSON — no markdown, no \`\`\`json fences, no explanation, no preamble.
+2. All keys must exactly match the schema. Do not add or remove keys.
+3. The document language is ${isEnglish ? 'ENGLISH' : 'MALAY'}. Match all text (date format) to this language.${isMLRAFormat ? ' EXCEPTION: for the judgmentNumber field, retrieve the case-type label EXACTLY as written in the document — do NOT translate it (e.g. keep "Criminal Appeal No" as-is, do not convert to "Rayuan Jenayah No", even in a Malay-language MLRA judgment).' : ' This includes the judgmentNumber case-type label (e.g. translate "Civil Suit No" <-> "Guaman Sivil No" to match).'}
+4. judgmentName: ALL CAPS except connector word 'v.' or 'lwn.'. Never include 'Lain-lain orang'.
+5. judgeName: strip ALL honorifics (Dato', Datuk, Tan Sri, Haji, Datin, YA, YM). Core name only.${isMLRAFormat ? ' For MLRA panel judgments, return ALL judges as a single comma-separated string, e.g. "Mohd Hishamudin Md Yunus, Linton Albert, Umi Kalthum Abdul Majid".' : ''}
+6. judgeTitle:${isMLRAFormat ? ' Return the shared judicial title suffix EXACTLY as it appears after the judges\' names — it is usually an abbreviation like "JJCA", "FCJ", "JCA", "JJFC". Do NOT expand or translate it.' : ' Exact title as written in the document.'}
+7. courtType: remove 'of' or 'di' before the city name.
+8. plaintiffs/defendants: each entry must include the IC No or Company No in square brackets. Exclude 'Lain-lain orang'.
+9. counsels: extract EACH counsel block separately. For the role field, return ONLY the party role noun — strip all prefixes like 'Solicitors for the', 'Counsel for', 'For the', 'Peguam bagi', 'Bagi pihak'. E.g. 'Solicitors for the Respondent' → 'Respondent', 'Bagi pihak Perayu' → 'Perayu'. ${isMLRAFormat ? 'KEEP \'M/s\', \'Messrs\', or \'Tetuan\' exactly as written in the firm name — do NOT strip or translate it.' : "Strip 'M/s', 'Messrs', 'Tetuan' from firm names."} Use null for name if no individual lawyer is named.
+10. If a field cannot be found in the document, use null (not an empty string).
+
+${fewShotExample}${mlraFewShotExample}
+
+SCHEMA TO FOLLOW:
+${schemaDescription}`;
+
+  // ── Retry loop (up to 3 attempts) ──
+  const maxRetries = 3;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(OLLAMA_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model:  OLLAMA_MODEL,
+          prompt: `${systemPrompt}\n\nDOCUMENT TEXT:\n${analyzedText}`,
+          stream: false,       // get the full response at once
+          format: 'json',      // Ollama's built-in JSON mode — forces valid JSON output
+          options: {
+            temperature:    0.0,   // fully deterministic — best for structured extraction
+            num_predict:    1500,  // enough tokens for the JSON object
+            repeat_penalty: 1.1,   // discourages the model from looping
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Ollama HTTP ${response.status}: ${errText}`);
+      }
+
+      const data = await response.json();
+
+      // Ollama returns the text in data.response
+      let rawContent = data.response || '';
+
+      // Safety: strip any accidental markdown fences a model might still add
+      rawContent = rawContent.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+
+      const extractedData = JSON.parse(rawContent);
+
+      buildXmlHeadnote(extractedData, fileName, isEnglish, documentText);
+      return; // success — exit
+
+    } catch (err) {
+      console.warn(`[Ollama] Attempt ${attempt} failed:`, err.message);
+
+      if (attempt < maxRetries) {
+        const wait = attempt * 3; // 3s, 6s back-off
+        showToast(`Retrying in ${wait}s… (${attempt}/${maxRetries})`, 'warning');
+        setStatus('warning', `Retrying in ${wait}s…`);
+        await new Promise(resolve => setTimeout(resolve, wait * 1000));
+        setStatus('processing', 'Retrying extraction...');
+      } else {
+        console.error('Ollama Extraction Failed -->', err.message);
+        showToast('AI Failed — is Ollama running? Check console.', 'error');
+        setStatus('error', 'Ollama Error');
+      }
+    }
+  }
+}
+
+// ── XML BUILDER ──
+function buildXmlHeadnote(data, fileName, isEnglish, rawDocumentText) {
+  const escapeXml = (unsafe) => {
+    if (!unsafe) return "";
+    return unsafe.replace(/&(?!amp;)/g, '&amp;');
+  };
+
+  const toTitleCase = (str) => {
+    return str.toLowerCase().replace(/(?:^|[\s\-\[\]\(\)])[a-z]/g, function(match) { 
+        return match.toUpperCase(); 
+    });
+  };
+
+  const stripHonorifics = (nameStr) => {
+    return nameStr
+        .replace(/\b[Aa]\/[Ll]\b/g, '')
+        .replace(/\b[Aa]\/[Pp]\b/g, '')
+        .replace(/\b(Bin|Binti|Dato|Datuk|Haji|Tan Sri)['’`]?\b/gi, '')
+        .replace(/^['’`\s,\.]+/, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+  };
+
+  // ── Citation Tag Detection ──
+  // Supports two filename formats:
+  //   Old: (1135-22H) Case Name.docx  → MLRHU_2022_1135
+  //   New: [2016] 7 MLRA 550.docx     → MLRA_2016_7_550
+  let citationTag = "MLRA_yyyy_vol_no";
+  let isMlraFile  = false;
+  let isMelruFile = false;
+
+  // Try NEW format first: [YYYY] VOL SERIES PAGE  e.g. "[2016] 7 MLRA 550"
+  const mlraMatch = fileName.match(/\[?(\d{4})\]?\s+(\d+)\s+([A-Za-z]+)\s+(\d+)/);
+  if (mlraMatch) {
+    const year    = mlraMatch[1];
+    const vol     = mlraMatch[2];
+    const series  = mlraMatch[3].toUpperCase();
+    const pageNum = mlraMatch[4];
+    citationTag   = `${series}_${year}_${vol}_${pageNum}`;
+    isMlraFile    = true;
+  } else {
+    // Fall back to OLD format: (1135-22H)
+    const codeMatch = fileName.match(/[\(]?(\d+)-(\d{2})([A-Za-z]+)[\)]?/);
+    if (codeMatch) {
+      const caseNum = codeMatch[1];
+      const year    = "20" + codeMatch[2];
+      const typeRaw = codeMatch[3].toUpperCase();
+      let type = typeRaw;
+      if (typeRaw === 'H')  type = 'MLRHU';
+      else if (typeRaw === 'A')  type = 'MLRA';
+      else if (typeRaw === 'PI') type = 'PILRU';
+      else if (typeRaw === 'E')  type = 'MELRU';
+      else if (typeRaw === 'SC') type = 'MLRSU';
+      citationTag = `${type}_${year}_${caseNum}`;
+      if (typeRaw === 'E') isMelruFile = true;
+    }
+  }
+
+  // 1. Format Counsels Block
+  // For MLRA files, the firm prefix must be retrieved from the source document
+  // as-is (no M/s <-> Tetuan translation), since MLRA judgments mix English
+  // counsel-block conventions even in Malay-language decisions. Non-MLRA files
+  // keep the existing language-based translation.
+  const firmPrefix = isMlraFile ? null : (isEnglish ? "M/s" : "Tetuan");
+  const counselLabel = isEnglish ? "Counsel:" : "Kaunsel:";
+
+  // ── MELRU: extract Award No from document text ──
+  let melruAwardNo = '';
+  if (isMelruFile && rawDocumentText) {
+    const awardMatch = rawDocumentText.match(
+      /AWARD\s+NO[:\s]+([\d]+)\s+(?:OF\s+YEAR|OF|TAHUN)\s+([\d]+)/i
+    );
+    if (awardMatch) {
+      const awardNum  = awardMatch[1];
+      const awardYear = awardMatch[2];
+      const isTahun   = /TAHUN/i.test(awardMatch[0]);
+      melruAwardNo = isTahun
+        ? `Award No: ${awardNum} tahun ${awardYear}`
+        : `Award No: ${awardNum} of ${awardYear}`;
+    }
+  }
+
+  // ── Role word normalisation ──
+  // Strips surrounding noise ("Solicitors for the", "Counsel for", "Peguam bagi", etc.)
+  // and returns just the canonical party role word in the correct output language.
+  //
+  // English role word map (input variants → canonical English output)
+  const enRoleMap = {
+    // plaintiff side
+    plaintiff:   'plaintiff',  plaintif:    'plaintiff',
+    respondent:  'respondent', responden:   'respondent',
+    debtor:      'debtor',     penghutang:  'debtor',
+    applicant:   'applicant',  pemohon:     'applicant',
+    claimant:    'claimant',
+    // defendant side
+    defendant:   'defendant',  defendan:    'defendant',
+    appellant:   'appellant',  perayu:      'appellant',
+    creditor:    'creditor',   pemiutang:   'creditor',   pemiutang_penghakiman: 'judgment creditor',
+    respondents: 'respondents', appellants: 'appellants',
+    defendants:  'defendants', plaintiffs:  'plaintiffs',
+    claimants:   'claimants',  applicants:  'applicants',
+  };
+  // Malay role word map (same keys → canonical Malay output)
+  const myRoleMap = {
+    plaintiff:   'plaintif',   plaintif:    'plaintif',
+    respondent:  'responden',  responden:   'responden',
+    debtor:      'penghutang', penghutang:  'penghutang',
+    applicant:   'pemohon',    pemohon:     'pemohon',
+    claimant:    'penuntut',
+    defendant:   'defendan',   defendan:    'defendan',
+    appellant:   'perayu',     perayu:      'perayu',
+    creditor:    'pemiutang',  pemiutang:   'pemiutang',
+    respondents: 'responden',  appellants:  'perayu-perayu',
+    defendants:  'defendan-defendan', plaintiffs: 'plaintif-plaintif',
+    claimants:   'penuntut-penuntut', applicants: 'pemohon-pemohon',
+  };
+
+  // Keywords whose counsel block gets the <PLAINTIFF> outer XML tag.
+  // For MLRA files, 'appellant/perayu' is the first-named party → <PLAINTIFF>.
+  // 'respondent/responden' always maps to <RESPONDENT> (never <PLAINTIFF>).
+  const plaintiffSideWords = new Set([
+    'plaintiff','plaintif','debtor','penghutang',
+    'applicant','pemohon','claimant','penuntut','plaintiffs',
+    'claimants','applicants',
+    // MLRA: appellant is the first-named party, analogous to plaintiff in trial courts
+    'appellant','appellants','perayu','perayu-perayu',
+  ]);
+
+  // Strips "For the", "Solicitors for the", "Bagi pihak" etc. → bare role word
+  const extractRoleWord = (roleStr) => {
+    return (roleStr || '').toLowerCase()
+      .replace(/solicitors?\s+for\s+the\s*/i, '')
+      .replace(/counsel\s+for\s+the\s*/i, '')
+      .replace(/counsel\s+for\s*/i, '')
+      .replace(/for\s+the\s*/i, '')
+      .replace(/peguam\s+bagi\s*/i, '')
+      .replace(/bagi\s*pihak\s*/i, '')
+      .replace(/[:;,\.]+$/, '')
+      .trim();
+  };
+
+  const buildRoleLabel = (roleWord) => {
+    const lookup = roleWord.replace(/\s+/g, '_').toLowerCase();
+    const token = Object.keys(isEnglish ? enRoleMap : myRoleMap)
+      .find(k => k === lookup || k === roleWord.split(/\s+/)[0].toLowerCase()) || roleWord;
+    const canonical = isEnglish
+      ? (enRoleMap[token] || toTitleCase(roleWord))
+      : (myRoleMap[token] || toTitleCase(roleWord));
+    return isEnglish ? `For the ${canonical}:` : `Bagi pihak ${canonical}:`;
+  };
+
+  // ── MELRU-specific counsel parser ──
+  // MELRU docs have NO "Counsel:" header. Representation data sits between
+  // the judge block and "Reference:" as bare lines:
+  //   Claimant absent
+  //   Messrs The Law Firm of M. Eswary - Counsel for the Claimant
+  //   Messrs Shook Lin & Bok - Counsel for the Respondent
+  // Also handles Malay: "Tidak hadir" / "Tetuan ..." / "Peguam bagi ..."
+  const parseMelruCounsels = (docText) => {
+    if (!docText) return [];
+
+    // Anchor: grab text before "Reference:" or "Rujukan:"
+    const refMatch = docText.match(/\bReference\s*:|\bRujukan\s*:/i);
+    let searchZone = refMatch ? docText.slice(0, refMatch.index) : docText.slice(0, 4000);
+
+    // Strip markdown artifacts (keep newlines for now — needed for line-by-line scan)
+    searchZone = searchZone.replace(/\*\*/g, '').replace(/\*/g, '');
+
+    // ── 1. Scan line-by-line for absent markers ──
+    // Flattening loses context, so scan lines first to avoid false matches
+    // like "- CHAIRMAN Claimant absent" being captured as "chairman claimant".
+    const absentRoles = new Set();
+    for (const line of searchZone.split(/\n/)) {
+      const ln = line.trim();
+      // Forward English: "Claimant absent" (must be the whole line)
+      let am = ln.match(/^([\w][\w\s]{0,30}?)\s+absent\s*$/i);
+      if (am) { absentRoles.add(am[1].trim().toLowerCase()); continue; }
+      // Malay with role: "Tidak hadir Perayu"
+      let am2 = ln.match(/^Tidak\s+hadir\s+([\w][\w\s]{0,30})\s*$/i);
+      if (am2) { absentRoles.add(am2[1].trim().toLowerCase()); continue; }
+      // Malay bare: "Tidak hadir" alone — flag a placeholder
+      if (/^Tidak\s+hadir\s*$/i.test(ln)) { absentRoles.add('__tidak_hadir__'); }
+    }
+
+    // ── 2. Flatten for firm-pattern matching ──
+    const flat = searchZone
+      .replace(/\s*\n\s*/g, ' ').replace(/\s+/g, ' ').trim();
+
+    // ── 3. Match "Messrs/M/s/Tetuan FirmName - Counsel for the Role" ──
+    const invRe = /((?:Messrs|M\/s|Tetuan)\s+[^\-\u2013\u2014]+?)\s*[-\u2013\u2014]\s*(?:Counsel\s+for\s+(?:the\s+)?|Peguam\s+bagi\s+(?:pihak\s+)?|Solicitors\s+for\s+(?:the\s+)?)([\w][\w\s]*?)(?=\s+(?:Messrs|M\/s|Tetuan)|\s*$)/gi;
+    const entries = [];
+    let im;
+    while ((im = invRe.exec(flat)) !== null) {
+      const firm    = im[1].trim();
+      const role    = im[2].trim().replace(/\s+/g, ' ');
+      const roleKey = role.toLowerCase();
+      const isAbsent = absentRoles.has(roleKey)
+        || [...absentRoles].some(ar =>
+            ar !== '__tidak_hadir__' && (roleKey.startsWith(ar) || ar.startsWith(roleKey)));
+      const value = isAbsent ? `Absent; ${firm}` : firm;
+      entries.push({ role, value });
+    }
+    return entries;
+  };
+
+  // ── Direct regex parser for the Counsel block in the raw document text ──
+  // Mammoth sometimes extracts both counsel lines onto ONE line with no newline,
+  // e.g.: "For the appellant: DP Vijandran (S Ramesh & T Selvadurai); M/s MP Samy & Co For the respondent: Lam Wai Tze; M/s Lam Wai Tze & Co"
+  // The parser handles both multi-line and single-line (merged) formats.
+  const parseCounselsFromText = (docText) => {
+    if (!docText) return [];
+
+    // Locate the "Counsel:" / "Kaunsel:" header
+    const headerMatch = docText.match(/\b(?:Counsel|Kaunsel)\s*:\s*/i);
+    if (!headerMatch) return [];
+
+    // Grab everything from after the header up to a blank line OR JUDGMENT keyword
+    const afterHeader = docText.slice(headerMatch.index + headerMatch[0].length);
+    let block = afterHeader.split(/\n{3,}|(?=\bJUDGMENT\b)|(?=\bPENGHAKIMAN\b)/i)[0] || '';
+
+    // Strip mammoth markdown artifacts: **bold** markers and *italic* markers,
+    // and collapse any runs of whitespace/newlines into a single space
+    block = block
+      .replace(/\*\*/g, '')   // remove bold markers
+      .replace(/\*/g, '')     // remove italic markers
+      .replace(/\s*\n\s*/g, ' ')  // flatten newlines to spaces
+      .trim();
+
+    // Now split on every role-label prefix that appears in the (now single-line) block.
+    // Role prefixes: "For the X:" or "Bagi pihak X:"
+    // NOTE: some source documents contain a typo with the space dropped
+    // ("Bagipihak" instead of "Bagi pihak") — the \s* after "Bagi" tolerates
+    // both spellings so a malformed second entry isn't merged into the first.
+    // Strategy: find all positions where a role label starts, slice between them.
+    const rolePrefixRe = /(?:For\s+the\s+|Bagi\s*pihak\s+)([\w][\w\s\-]*?)\s*:/gi;
+    const matches = [];
+    let rm;
+    while ((rm = rolePrefixRe.exec(block)) !== null) {
+      matches.push({ index: rm.index, role: rm[1].trim(), end: rm.index + rm[0].length });
+    }
+
+    const entries = [];
+
+    if (matches.length > 0) {
+      // ── Standard format: "For the X: ..." or "Bagi pihak X: ..." ──
+      for (let i = 0; i < matches.length; i++) {
+        const valueStart = matches[i].end;
+        const valueEnd   = i + 1 < matches.length ? matches[i + 1].index : block.length;
+        const value = block.slice(valueStart, valueEnd).trim();
+        entries.push({ role: matches[i].role, value });
+      }
+    } else {
+      // ── Inverted format: "Messrs/M/s/Tetuan Firm - Counsel for the X" ──
+      // Also handles leading "X absent" / "X hadir sendiri" lines.
+      // Strategy: tokenise the flattened block by firm-start keyword positions
+      // so each chunk is anchored and the role capture cannot bleed into the
+      // next firm name.
+
+      // 1. Collect roles that appear before "absent" / "hadir sendiri"
+      const absentRe = /([\w][\w\s]*?)\s+(?:absent|hadir\s+sendiri)/gi;
+      const absentRoles = new Set();
+      let am;
+      while ((am = absentRe.exec(block)) !== null) {
+        absentRoles.add(am[1].trim().toLowerCase());
+      }
+
+      // 2. Locate every position where a firm prefix begins
+      const firmStartRe = /(?:(?:^|\s)(?:Messrs|M\/s|Tetuan)\s+)/gi;
+      const firmPositions = [];
+      let fp;
+      while ((fp = firmStartRe.exec(block)) !== null) {
+        // fp.index is the leading whitespace; advance past it
+        firmPositions.push(fp.index + fp[0].length - fp[0].trimStart().length);
+      }
+
+      // 3. Parse each per-firm chunk: "Messrs Firm Name - Counsel for the Role"
+      const dashRoleRe = /^((?:Messrs|M\/s|Tetuan)\s+.+?)\s*[-\u2013\u2014]\s*(?:Counsel\s+for\s+(?:the\s+)?|Peguam\s+bagi\s+(?:pihak\s+)?)(\w[\w\s]*?)\s*$/i;
+      for (let fi = 0; fi < firmPositions.length; fi++) {
+        const chunkStart = firmPositions[fi];
+        const chunkEnd   = fi + 1 < firmPositions.length ? firmPositions[fi + 1] : block.length;
+        const chunk = block.slice(chunkStart, chunkEnd).trim();
+        const cm = chunk.match(dashRoleRe);
+        if (!cm) continue;
+        const firm    = cm[1].trim();
+        const role    = cm[2].trim();
+        const roleKey = role.toLowerCase();
+        // Prepend "Absent; " when that role was flagged absent
+        const value   = absentRoles.has(roleKey) ? `Absent; ${firm}` : firm;
+        entries.push({ role, value });
+      }
+    }
+
+    return entries;
+  };
+
+  // ── Render one parsed counsel line into its XML string ──
+  // valuePart examples:
+  //   "DP Vijandran (S Ramesh & T Selvadurai); M/s MP Samy & Co"
+  //   "Lam Wai Tze; M/s Lam Wai Tze & Co"
+  //   "Ahmad Syafiq; Tetuan Azmi & Associates"
+  const renderCounselEntry = (roleWord, valuePart) => {
+    const isPlaintiffSide = plaintiffSideWords.has(roleWord.toLowerCase());
+    const xmlTag  = isPlaintiffSide ? 'PLAINTIFF' : 'RESPONDENT';
+    const nameTag = isPlaintiffSide ? 'PLAINTIFF_NAME' : 'RESPONDENT_NAME';
+    const roleLabel = buildRoleLabel(roleWord);
+
+    // ── Detect and strip leading "Absent" / "Hadir sendiri" status ──
+    // e.g. valuePart = "Absent; Messrs The Law Firm of M. Eswary"
+    let absentStatus = '';
+    let valueTrimmed = valuePart.trim();
+    const absentMatch = valueTrimmed.match(/^(Absent|Hadir\s+sendiri)\s*;?\s*/i);
+    if (absentMatch) {
+      absentStatus = absentMatch[1].charAt(0).toUpperCase() + absentMatch[1].slice(1).toLowerCase();
+      valueTrimmed = valueTrimmed.slice(absentMatch[0].length).trim();
+    }
+
+    // Split on the LAST semicolon to separate names from firm
+    // "DP Vijandran (S Ramesh & T Selvadurai); M/s MP Samy & Co"
+    //   → names part: "DP Vijandran (S Ramesh & T Selvadurai)"
+    //   → firm part:  "M/s MP Samy & Co"
+    const lastSemi = valueTrimmed.lastIndexOf(';');
+    let namesPart = lastSemi !== -1 ? valueTrimmed.slice(0, lastSemi).trim() : valueTrimmed.trim();
+    let firmPart  = lastSemi !== -1 ? valueTrimmed.slice(lastSemi + 1).trim() : '';
+
+    // If firmPart doesn't look like a firm (no M/s / Tetuan / common firm words),
+    // treat the whole value as just names (no firm given).
+    const looksLikeFirm = /^(?:M\/s|Messrs|Tetuan)\b/i.test(firmPart) || /\b(?:Associates|Partnership|Chambers|&\s*Co|LLC|LLP)\b/i.test(firmPart) || /^(?:TPR|DPR|DPP)$/i.test(firmPart);
+    if (!looksLikeFirm && firmPart) {
+      namesPart = valueTrimmed.trim();
+      firmPart  = '';
+    }
+
+    // ── Whole value is a firm (no semicolon, but starts with a firm prefix) ──
+    // e.g. inverted-format value = "Messrs The Law Firm of M. Eswary"
+    if (!firmPart && /^(?:M\/s|Messrs|Tetuan)\b/i.test(namesPart)) {
+      firmPart  = namesPart;
+      namesPart = '';
+    }
+
+    // ── Special case: no semicolon, but the value ends in a comma-separated
+    // prosecutorial designation, e.g. "Mohd Fairuz Johari, TPR" (TPR = Timbalan
+    // Pendakwa Raya / Deputy Public Prosecutor). Treat the trailing token as the
+    // firm/designation field rather than part of the lawyer's name.
+    if (!firmPart) {
+      const tprMatch = namesPart.match(/^(.+?)[,;]\s*(TPR|DPR|DPP)\s*$/i);
+      if (tprMatch) {
+        namesPart = tprMatch[1].trim();
+        firmPart  = tprMatch[2].toUpperCase();
+      }
+    }
+
+    // ── Parse the names part ──
+    // Could be:  "DP Vijandran (S Ramesh & T Selvadurai)"
+    // or just:   "Lam Wai Tze"
+    let innerHtml = '';
+    const parenMatch = namesPart.match(/^([^(]+?)\s*\(([^)]+)\)\s*$/);
+    if (parenMatch) {
+      // Primary name + parenthetical co-counsel group
+      const primary = escapeXml(toTitleCase(stripHonorifics(parenMatch[1].trim())));
+      // Co-counsel group may itself be "&"-separated: "S Ramesh & T Selvadurai"
+      const coGroup = parenMatch[2];
+      const coFormatted = coGroup.split(/\s*&\s*/).map(n => {
+          return escapeXml(toTitleCase(stripHonorifics(n.trim())));
+      }).join(' &amp; ');
+      innerHtml += `<${nameTag}>${primary}</${nameTag}> (<${nameTag}>${coFormatted}</${nameTag}>)`;
+    } else if (namesPart) {
+      // Single name (no parentheses)
+      const clean = escapeXml(toTitleCase(stripHonorifics(namesPart)));
+      innerHtml += `<${nameTag}>${clean}</${nameTag}>`;
+    }
+
+    // ── Append firm ──
+    if (firmPart) {
+      if (/^(?:TPR|DPR|DPP)$/i.test(firmPart)) {
+        // Prosecutorial designation (e.g. "TPR") — not a law firm, no M/s or Tetuan prefix
+        if (innerHtml) innerHtml += '; ';
+        innerHtml += `<FIRMS_NAME>${firmPart.toUpperCase()}</FIRMS_NAME>`;
+      } else if (firmPrefix === null) {
+        // MLRA file: keep the firm prefix exactly as it appears in the source
+        // document (no M/s <-> Tetuan translation). If no recognised prefix is
+        // present at all, leave the firm name bare rather than inventing one.
+        if (innerHtml) innerHtml += '; ';
+        innerHtml += `<FIRMS_NAME>${escapeXml(normalizeFirmName(firmPart.trim()))}</FIRMS_NAME>`;
+      } else {
+        // Non-MLRA: strip M/s / Messrs / Tetuan, strip abbrev periods, re-add correct prefix
+        const firmClean = normalizeFirmName(firmPart.replace(/^(?:M\/s|Messrs|Tetuan)\s*/i, '').trim());
+        if (innerHtml) innerHtml += '; ';
+        innerHtml += `<FIRMS_NAME>${firmPrefix} ${escapeXml(firmClean)}</FIRMS_NAME>`;
+      }
+    }
+
+    // Emit absent status between role label and firm/name block
+    const absentPrefix = absentStatus ? `${escapeXml(absentStatus)}; ` : '';
+    return `<p><i><${xmlTag}>${escapeXml(roleLabel)} ${absentPrefix}${innerHtml}</${xmlTag}></i></p>`;
+  };
+
+  // ── normalizeFirmName: remove abbreviation periods from firm names ──
+  // Rules:
+  //   1. Initials joined by periods (P.L., M.H.) → strip all dots  e.g. P.L. → PL
+  //   2. Short token (≤6 chars) followed by period then space/end  e.g. M. Co. Assoc. → M Co Assoc
+  const normalizeFirmName = (name) => {
+    if (!name) return name;
+    // Remove period between or after single uppercase letters: A.B. → AB
+    name = name.replace(/\b([A-Z])\.(?=[A-Z]\b|\.)/g, '$1');
+    // Final uppercase initial: e.g. trailing "M." → "M"
+    name = name.replace(/\b([A-Z])\.(?=\s|$)/g, '$1');
+    // Short token (letters/digits, ≤6 chars) with trailing period: Co. Assoc. Sdn. Bhd.
+    name = name.replace(/\b([A-Za-z\d]{1,6})\.(?=\s|$)/g, '$1');
+    return name.trim();
+  };
+
+  // ── Build counselEntries: try direct text parse first, fall back to AI data ──
+  let counselEntries = [];
+
+  // For MELRU files, use the dedicated MELRU parser first (no "Counsel:" header)
+  const melruParsed = isMelruFile ? parseMelruCounsels(rawDocumentText || '') : [];
+  const parsedFromText = melruParsed.length > 0 ? melruParsed : parseCounselsFromText(rawDocumentText || '');
+  if (parsedFromText.length > 0) {
+    // ✅ Primary path: regex-parsed directly from the raw document — 100% faithful
+    parsedFromText.forEach(({ role, value }) => {
+      counselEntries.push(renderCounselEntry(role, value));
+    });
+  } else if (Array.isArray(data.counsels) && data.counsels.length > 0) {
+    // ⚠️ Fallback: AI-extracted data (may have lost co-counsel group)
+    data.counsels.forEach(c => {
+      const rawRole = (c.role || '').trim();
+      if (!rawRole && !c.firm && !c.name) return;
+      const roleWord = extractRoleWord(rawRole);
+      // Reconstruct a valuePart string from AI fields so renderCounselEntry can handle it
+      let valuePart = '';
+      if (c.name && c.name.toLowerCase() !== 'null') valuePart += c.name.trim();
+      if (c.firm) valuePart += (valuePart ? '; ' : '') + c.firm.trim();
+      counselEntries.push(renderCounselEntry(roleWord, valuePart));
+    });
+  } else {
+    // ⚠️ Final fallback: old schema keys (plaintiffCounsels / defendantCounsels)
+    const pList = data.plaintiffCounsels || [];
+    const dList = data.defendantCounsels || [];
+    const pLabel = isEnglish ? "For the plaintiff:" : "Bagi pihak plaintif:";
+    const dLabel = isEnglish ? "For the defendants:" : "Bagi pihak defendan:";
+    if (pList.length > 0) {
+      const inner = pList.map(c => {
+        let v = '';
+        if (c.name) v += c.name;
+        if (c.firm) v += (v ? '; ' : '') + c.firm;
+        return renderCounselEntry('plaintiff', v);
+      }).filter(Boolean).join('\n\n');
+      if (inner) counselEntries.push(inner);
+    }
+    if (dList.length > 0) {
+      const inner = dList.map(c => {
+        let v = '';
+        if (c.name) v += c.name;
+        if (c.firm) v += (v ? '; ' : '') + c.firm;
+        return renderCounselEntry('defendant', v);
+      }).filter(Boolean).join('\n\n');
+      if (inner) counselEntries.push(inner);
+    }
+  }
+
+  let counselsHtml = `<COUNSELS><p><b>${counselLabel}</b></p>\n\n`;
+  counselsHtml += counselEntries.join('\n\n');
+  counselsHtml += `</COUNSELS>`;
+
+  // 2. Format Parties Block 
+  const formatParties = (parties) => {
+      if (!parties || parties.length === 0) return "";
+      let formatted = [];
+      parties.forEach(p => {
+         if (/lain-lain orang yang tidak diketahui/i.test(p)) return;
+         
+         let cleanP = p.replace(/\[\s*(?:Identity\s+Card\s+No|ID No|ID|No\.? K\/?P|K\/?P)\s*:/gi, '[IC No:');
+
+         // Remove any bracket group whose value is null/empty, e.g. [IC No: null] or [Company No: ]
+         cleanP = cleanP.replace(/\[\s*(?:IC No|Company No)\s*:\s*(?:null)?\s*\]/gi, '').trim();
+
+         let bracketMatch = cleanP.match(/(\[.*?\])$/);
+         let bracketText = bracketMatch ? bracketMatch[0] : "";
+         let nameText = bracketMatch ? cleanP.replace(bracketText, '').trim() : cleanP;
+
+         nameText = stripHonorifics(nameText);
+         nameText = toTitleCase(nameText);
+         
+         let finalStr = bracketText ? `${nameText} ${bracketText}` : nameText;
+
+         if (finalStr) formatted.push(`<NAME>${escapeXml(finalStr)}</NAME>`);
+      });
+      return formatted.length === 1 ? formatted[0] : `\n${formatted.join('\n')}\n`;
+  };
+
+  const plaintiffHtml = formatParties(data.plaintiffs);
+  const defendantHtml = formatParties(data.defendants);
+
+  // ── MLRA PARTY BLOCK: derive APPELLANT / RESPONDENT from filename + counsel roles ──
+  // For MLRA files the party names come from the filename (already extracted as
+  // rawFileNameName below).  We determine which side is APPELLANT vs RESPONDENT
+  // by inspecting what the counsel entries say ("For the appellant" / "For the respondent").
+  // This block is built lazily after rawFileNameName is known (see after Step D).
+
+ // 3. Title Extraction — prefer filename, fall back to AI-extracted judgmentName
+  // Step A: Remove the citation prefix and the extension
+  //   Old format: "(1135-22H) Case Name.docx"              → strip "(1135-22H) "
+  //   New format: "[2016] 7 MLRA 550 Case Name.docx"       → strip "[2016] 7 MLRA 550 "
+  //   Underscore format: "_2016__7_MLRA_550.docx"           → no case name → fall back to AI
+  let rawFileNameName = fileName
+      .replace(/^_?\[?\d{4}\]?_?\s*_?\d+_?\s*[A-Za-z]+_?\s*\d+\s*/, '')  // MLRA new format (spaces or underscores)
+      .replace(/^\[?\d{4}\]?\s+\d+\s+[A-Za-z]+\s+\d+\s*/, '')             // MLRA new format (spaces)
+      .replace(/^[\(]?\d+-\d{2}[A-Za-z]+[\)]?\s*/, '')                      // old format fallback
+      .replace(/\.[a-zA-Z0-9]+$/, '')
+      .replace(/^_+|_+$/g, '')   // strip leading/trailing underscores left over
+      .trim();
+
+  // If filename yielded no case name, fall back to the AI-extracted judgmentName
+  const hasConnector = isEnglish ? /\bV\b|\bv\b\./.test(rawFileNameName) : /\bLWN\b|\blwn\b\./.test(rawFileNameName);
+  if (!rawFileNameName || !hasConnector) {
+      // Use AI output directly (already has correct casing: "CORPORATE SPIRIT SDN BHD v. CHAW KOCK KAW @ CHOW KOK KOW")
+      rawFileNameName = (data.judgmentName || '').replace(/\.[a-zA-Z0-9]+$/, '').trim();
+  }
+
+  // Step B: Strip all periods and make it UPPERCASE
+  let formattedJudgmentName = rawFileNameName.replace(/\./g, '').toUpperCase();
+
+  // Step C: Restore the lowercase connector
+  // Some source documents stack the party name and the connector word on separate
+  // lines (e.g. "...IRADA" / "lwn." / "PENDAKWA RAYA"), and when that layout is
+  // flattened to plain text the line break can collapse with no space at all
+  // ("IRADALWN"). A plain \bLWN\b regex can't detect this because \b only fires
+  // at a word/non-word transition, and "A" before "L" is word-to-word — so we
+  // first force a space around every literal LWN/V token, then normalise spacing
+  // and restore the proper lowercase " lwn. " / " v. " connector.
+  if (isEnglish) {
+      formattedJudgmentName = formattedJudgmentName.replace(/\bV\b/g, ' V ');
+      formattedJudgmentName = formattedJudgmentName.replace(/\s*\bV\b\s*/g, ' v. ');
+  } else {
+      formattedJudgmentName = formattedJudgmentName.replace(/LWN/g, ' LWN ');
+      formattedJudgmentName = formattedJudgmentName.replace(/\s*\bLWN\b\s*/g, ' lwn. ');
+  }
+  formattedJudgmentName = formattedJudgmentName.replace(/\s+/g, ' ').trim();
+
+  // Step D: Convert & to &amp; for XML safety
+  formattedJudgmentName = escapeXml(formattedJudgmentName);
+
+  // NOTE: mlraPartyBlock is built below after formattedJudgmentNumber is ready.
+  let formattedJudgmentNumber = escapeXml(data.judgmentNumber || '');
+  if (formattedJudgmentNumber && !formattedJudgmentNumber.startsWith('[')) formattedJudgmentNumber = '[' + formattedJudgmentNumber;
+  if (formattedJudgmentNumber && !formattedJudgmentNumber.endsWith(']')) formattedJudgmentNumber = formattedJudgmentNumber + ']';
+  
+  // Normalise any dash separator (e.g. "WRIT SAMAN NO - ") to a colon ("Writ Saman No: ")
+  formattedJudgmentNumber = formattedJudgmentNumber.replace(/\bNO\s*-\s*/i, 'No: ');
+
+  // Correct known AI misspellings in judgment type words
+  const jnSpellingFixes = [
+    [/\bsamman\b/gi, 'Saman'],
+    [/\bguaman\b/gi, 'Guaman'],
+  ];
+  jnSpellingFixes.forEach(([pattern, correct]) => {
+    formattedJudgmentNumber = formattedJudgmentNumber.replace(pattern, correct);
+  });
+
+  let colonIndex = formattedJudgmentNumber.indexOf(':');
+  if (colonIndex !== -1) {
+      let prefix = formattedJudgmentNumber.substring(0, colonIndex);
+      let suffix = formattedJudgmentNumber.substring(colonIndex);
+      
+      // THE FIX: Automatically translate Guaman Sivil <-> Civil Suit based on language
+      // (MLRA files are exempt — their case-type label is retrieved verbatim from
+      // the source document and must not be auto-translated.)
+      if (!isMlraFile) {
+          if (isEnglish) {
+              prefix = prefix.replace(/(?:No\.?\s*)?Guaman\s+Sivil(?:\s*No\.?)?/gi, 'Civil Suit No');
+          } else {
+              prefix = prefix.replace(/(?:No\.?\s*)?Civil\s+Suit(?:\s*No\.?)?/gi, 'Guaman Sivil No');
+          }
+      }
+      
+      formattedJudgmentNumber = toTitleCase(prefix) + suffix;
+  } else {
+      // No colon found — still apply title case to the whole number string
+      formattedJudgmentNumber = toTitleCase(formattedJudgmentNumber);
+  }
+
+
+  // 5. Judge Abbreviation / Block Formatting
+  // For MLRA files, judgeName may contain multiple comma-separated judges
+  // sharing a single judicial title suffix (e.g. "JJCA", "JJFC", "JJA").
+  // For single-judge files the existing logic applies unchanged.
+  //
+  // MLRA example:
+  //   judgeName  : "Mohd Hishamudin Md Yunus, Linton Albert, Umi Kalthum Abdul Majid"
+  //   judgeTitle : "JJCA"
+  // → <JUDGE_NAME><NAME>Mohd Hishamudin Md Yunus</NAME>, <NAME>Linton Albert</NAME>, <NAME>Umi Kalthum Abdul Majid</NAME> JJCA</JUDGE_NAME>
+  //
+  // Single-judge example:
+  //   judgeName  : "Zakaria Mohd Yusof"
+  //   judgeTitle : "Hakim"
+  // → <JUDGE_NAME><NAME>Zakaria Mohd Yusof</NAME> H</JUDGE_NAME>
+
+  let titleAbbr = "J";
+  if (data.judgeTitle) {
+      // For MLRA files the title is already an abbreviation (JJCA, FCJ, JCA…);
+      // for regular files we derive initials from the full title words.
+      const rawTitle = data.judgeTitle.trim();
+      // Treat it as a pre-formed abbreviation if it is all-caps (≤ 6 chars) or
+      // contains no lowercase letters at all — else derive initials normally.
+      const isAbbrev = /^[A-Z]{1,6}$/.test(rawTitle);
+      if (isAbbrev) {
+          titleAbbr = rawTitle;
+      } else {
+          const words = rawTitle.split(/\s+/).filter(Boolean);
+          titleAbbr = words.map(w => w.charAt(0).toUpperCase()).join('') || 'J';
+      }
+  }
+
+  let judgeBlock;
+  if (isMlraFile && data.judgeName) {
+      // MLRA: split on commas to get individual judge names
+      const judgeNames = data.judgeName.split(/\s*,\s*/).filter(Boolean);
+      const nameTags = judgeNames.map(name => {
+          let clean = escapeXml(name).replace(/\b[Jj]\b\.?$/, '').trim();
+          clean = stripHonorifics(clean);
+          clean = toTitleCase(clean);
+          return `<NAME>${clean}</NAME>`;
+      });
+      judgeBlock = `<JUDGE_NAME>${nameTags.join(', ')} ${titleAbbr}</JUDGE_NAME>`;
+  } else {
+      // Standard single-judge path (unchanged)
+      let cleanJudge = escapeXml(data.judgeName || '').replace(/\b[Jj]\b\.?$/, '').trim();
+      cleanJudge = stripHonorifics(cleanJudge);
+      cleanJudge = toTitleCase(cleanJudge);
+      judgeBlock = cleanJudge
+          ? `<JUDGE_NAME><NAME>${cleanJudge}</NAME> ${titleAbbr}</JUDGE_NAME>`
+          : `<JUDGE_NAME><NAME></NAME> ${titleAbbr}</JUDGE_NAME>`;
+  }
+
+  // 6. Court Type Formatting & Auto-Translation
+  let formattedCourtType = toTitleCase(escapeXml(data.courtType || ''));
+  
+  if (isEnglish) {
+      // THE FIX: Translate without adding "of"
+      formattedCourtType = formattedCourtType.replace(/Mahkamah Tinggi/gi, 'High Court');
+      formattedCourtType = formattedCourtType.replace(/Mahkamah Rayuan/gi, 'Court of Appeal');
+      formattedCourtType = formattedCourtType.replace(/Mahkamah Persekutuan/gi, 'Federal Court');
+  } else {
+      formattedCourtType = formattedCourtType.replace(/High Court(?: of)?/gi, 'Mahkamah Tinggi');
+      formattedCourtType = formattedCourtType.replace(/Court of Appeal/gi, 'Mahkamah Rayuan');
+      formattedCourtType = formattedCourtType.replace(/Federal Court/gi, 'Mahkamah Persekutuan');
+  }
+  
+  // THE FIX: Aggressively strip "of" if the original document natively included it
+  formattedCourtType = formattedCourtType.replace(/High Court of/gi, 'High Court');
+  
+  // Ensure the comma after Malaya/Sabah/Sarawak
+  formattedCourtType = formattedCourtType.replace(/Malaya\s+(?!,)/i, 'Malaya, ');
+  formattedCourtType = formattedCourtType.replace(/Sabah(?: and| &) Sarawak\s+(?!,)/i, 'Sabah dan Sarawak, '); // Handles East Malaysia courts just in case
+
+  // 7. Date Formatting — normalise to the correct language regardless of what Ollama extracted
+  // Each entry: [English full, Malay full, ...aliases/abbreviations to match]
+  const monthTable = [
+    ['January',   'Januari',   'jan'],
+    ['February',  'Februari',  'feb'],
+    ['March',     'Mac',       'mar', 'mac'],
+    ['April',     'April',     'apr'],
+    ['May',       'Mei',       'may', 'mei'],
+    ['June',      'Jun',       'jun'],
+    ['July',      'Julai',     'jul', 'julai'],
+    ['August',    'Ogos',      'aug', 'ogos', 'ogo'],
+    ['September', 'September', 'sep'],
+    ['October',   'Oktober',   'oct', 'okt', 'oktober'],
+    ['November',  'November',  'nov'],
+    ['December',  'Disember',  'dec', 'dis', 'disember'],
+  ];
+  // Build a map from any known alias → { en, my }
+  const monthMap = {};
+  monthTable.forEach(([en, my, ...aliases]) => {
+    [en.toLowerCase(), my.toLowerCase(), ...aliases].forEach(alias => {
+      monthMap[alias] = { en, my };
+    });
+  });
+  // Build a regex that matches any known month word (longest first to avoid partial matches)
+  const monthPattern = new RegExp(
+    '\\b(' + Object.keys(monthMap).sort((a, b) => b.length - a.length).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b',
+    'gi'
+  );
+  let formattedDate = escapeXml(data.date || '').replace(/hb\.?/gi, '').replace(/\s+/g, ' ').trim();
+  formattedDate = formattedDate.replace(monthPattern, (m) => {
+    const entry = monthMap[m.toLowerCase()];
+    if (!entry) return m;
+    return isEnglish ? entry.en : entry.my;
+  });
+
+  // 8. Structural Strings
+  const refCasesLabel = isEnglish ? "Case(s) referred to:" : "Kes-kes yang dirujuk:";
+  const refLegisLabel = isEnglish ? "Legislation referred to:" : "Perundangan yang dirujuk:";
+  const refOtherLabel = isEnglish ? "Other(s) referred to:" : "Lain-lain yang dirujuk:";
+  const verdictText = isEnglish ? "[.]" : "[.]";
+  const stateText = "WILAYAH PERSEKUTUAN / KEDAH / PAHANG / SELANGOR / PERAK / JOHOR / KELANTAN / MELAKA / PULAU PINANG / SARAWAK / NEGERI SEMBILAN / TERENGGANU / SABAH / PERLIS";
+
+  // ── MLRA: build PARTY block using APPELLANT/RESPONDENT tags ──
+  // Party names come from rawFileNameName (derived from filename, or AI judgmentName as fallback).
+  // The role assignment (APPELLANT vs RESPONDENT) is derived from the counsel
+  // section: whichever role appears first in data.counsels determines which
+  // side of the case name gets the APPELLANT tag.
+  let partyBlock;
+  if (isMlraFile) {
+      // Use the already-normalised formattedJudgmentName (built in Step C above,
+      // which has correct " v. " / " lwn. " spacing even when the source document
+      // glued the connector to the preceding word with no space) rather than
+      // re-deriving from the raw rawFileNameName, which could still contain
+      // unnormalised glued tokens (e.g. "IRADALWN") and fail to split below.
+      const rawUnescaped = formattedJudgmentName.replace(/&amp;/g, '&');
+      // Split on the connector (allowing for any whitespace variation)
+      const parts = isEnglish
+          ? rawUnescaped.split(/\s+v\.\s+/i)
+          : rawUnescaped.split(/\s+lwn\.\s+/i);
+
+      // Appellant-side role keywords (first-named party in CoA/FC is usually appellant)
+      const appellantKeywords = new Set([
+          'appellant','appellants','perayu','perayu-perayu',
+      ]);
+      // Respondent-side keywords
+      const respondentKeywords = new Set([
+          'respondent','respondents','responden',
+      ]);
+
+      // Inspect the FIRST counsel role to anchor the assignment
+      let firstRoleWord = '';
+      if (Array.isArray(data.counsels) && data.counsels.length > 0) {
+          firstRoleWord = extractRoleWord((data.counsels[0].role || '')).toLowerCase();
+      }
+
+      // Default: assume first party = appellant (standard CoA/FC convention)
+      // Override only if first counsel is explicitly respondent-side
+      const firstIsRespondent = respondentKeywords.has(firstRoleWord);
+      const party0tag = firstIsRespondent ? 'RESPONDENT' : 'APPELLANT';
+      const party1tag = firstIsRespondent ? 'APPELLANT' : 'RESPONDENT';
+
+      const makeMLRAName = (raw) => {
+          const name = toTitleCase(escapeXml(raw.trim()));
+          return `<NAME>${name}</NAME>`;
+      };
+
+      if (parts.length >= 2) {
+          partyBlock = `<PARTY>
+<PARTY_JNO>${formattedJudgmentNumber}</PARTY_JNO>
+<${party0tag}>${makeMLRAName(parts[0])}</${party0tag}>
+<${party1tag}>${makeMLRAName(parts[1])}</${party1tag}>
+</PARTY>`;
+      } else {
+          // Fallback: no connector found
+          partyBlock = `<PARTY>
+<PARTY_JNO>${formattedJudgmentNumber}</PARTY_JNO>
+<APPELLANT>${makeMLRAName(rawUnescaped)}</APPELLANT>
+<RESPONDENT></RESPONDENT>
+</PARTY>`;
+      }
+  } else if (isMelruFile) {
+      // MELRU: use CLAIMANT/COMPANY tags and PARTY_AWARD_NO
+      const rawUnescapedMelru = formattedJudgmentName.replace(/&amp;/g, '&');
+      const melruParts = isEnglish
+          ? rawUnescapedMelru.split(/\s+v\.\s+/i)
+          : rawUnescapedMelru.split(/\s+lwn\.\s+/i);
+      const makeMelruName = (raw) => `<NAME>${toTitleCase(escapeXml(raw.trim()))}</NAME>`;
+      const melruPartyJno = melruAwardNo
+          ? `${melruAwardNo} ${formattedJudgmentNumber}`
+          : formattedJudgmentNumber;
+      if (melruParts.length >= 2) {
+          partyBlock = `<PARTY>\n<PARTY_AWARD_NO>${melruPartyJno}</PARTY_AWARD_NO>\n<CLAIMANT>${makeMelruName(melruParts[0])}</CLAIMANT>\n<COMPANY>${makeMelruName(melruParts[1])}</COMPANY>\n</PARTY>`;
+      } else {
+          partyBlock = `<PARTY>\n<PARTY_AWARD_NO>${melruPartyJno}</PARTY_AWARD_NO>\n<CLAIMANT>${makeMelruName(rawUnescapedMelru)}</CLAIMANT>\n<COMPANY></COMPANY>\n</PARTY>`;
+      }
+  } else {
+      // Non-MLRA, Non-MELRU: standard PLAINTIFF/DEFENDANT tags
+      partyBlock = `<PARTY>\n<PARTY_JNO>${formattedJudgmentNumber}</PARTY_JNO>\n<PLAINTIFF>${plaintiffHtml}</PLAINTIFF>\n<DEFENDANT>${defendantHtml}</DEFENDANT>\n</PARTY>`;
+  }
+
+  // 9. Full XML Layout
+  const xmlOutput = `<${citationTag}>
+<OTHER_CITATIONS>
+<ILJ_CITATION></ILJ_CITATION>
+<ILJU_CITATION></ILJU_CITATION>
+<MLJ_CITATION></MLJ_CITATION>
+<MLJU_CITATION></MLJU_CITATION>
+<ILR_CITATION></ILR_CITATION>
+<CLJ_CITATION></CLJ_CITATION>
+<LNS_CITATION></LNS_CITATION>
+<AMR_CITATION></AMR_CITATION>
+<JURNAL_HUKUM></JURNAL_HUKUM>
+</OTHER_CITATIONS>
+
+<REPORTED_CITATION></REPORTED_CITATION>
+
+<JUDGMENT_COUNTRY>MALAYSIA</JUDGMENT_COUNTRY>
+<STATE>${stateText}</STATE>
+
+<JUDGMENT_LANGUAGE>${isEnglish ? 'ENGLISH' : 'MALAYSIAN'}</JUDGMENT_LANGUAGE>
+
+<JUDGMENT_NAME>${formattedJudgmentName}</JUDGMENT_NAME>
+<COURT_TYPE>${formattedCourtType}</COURT_TYPE>
+${judgeBlock}
+${isMelruFile && melruAwardNo ? `<JUDGMENT_NUMBER><AWARD_NO>${melruAwardNo}</AWARD_NO> ${formattedJudgmentNumber}</JUDGMENT_NUMBER>` : `<JUDGMENT_NUMBER>${formattedJudgmentNumber}</JUDGMENT_NUMBER>`}
+<JUDGMENT_DATE>${formattedDate}</JUDGMENT_DATE>
+
+<HEADNOTE>
+
+<REFERRED_CASES><p><b>${refCasesLabel}</b></p>
+
+</REFERRED_CASES>
+
+<REFERRED_LEGISLATIONS><p><b>${refLegisLabel}</b></p>
+
+</REFERRED_LEGISLATIONS>
+
+<REFERRED_OTHERSOURCES><p><b>${refOtherLabel}</b></p>
+
+</REFERRED_OTHERSOURCES>
+
+${counselsHtml}
+
+<VERDICT><p><i>${verdictText}</i></p></VERDICT>
+
+</HEADNOTE>
+
+${partyBlock}
+
+<CASE_PROGRESSION>
+<p><b>Case Progression:</b></p>
+
+<p><FEDERAL_COURT>Federal Court</FEDERAL_COURT>: <STATUS></STATUS></p>
+
+<p><COURT_OF_APPEAL>Court Of Appeal</COURT_OF_APPEAL>: <STATUS></STATUS></p>
+
+<p><HIGH_COURT>High Court</HIGH_COURT>: <STATUS></STATUS></p>
+
+<p><SESSION_COURT>Sessions Court</SESSION_COURT>: <STATUS></STATUS></p>
+
+<p><MAGISTRATE_COURT>Magistrate's Court</MAGISTRATE_COURT>: <STATUS></STATUS></p>
+
+<p><INDUSTRIAL_COURT>Industrial Court</INDUSTRIAL_COURT>: <STATUS></STATUS></p>
+${isEnglish ? '\n<p><COURT_OF_APPEAL_SYARIAH>Court Of Appeal Syariah</COURT_OF_APPEAL_SYARIAH>: <STATUS></STATUS></p>' : ''}
+</CASE_PROGRESSION>
+
+<JUDGMENT>
+
+</JUDGMENT>
+</${citationTag}>`;
+
+  const inputEl = document.getElementById('inputText');
+  inputEl.value = xmlOutput; 
+  updateCount();
+  showToast('AI Headnote Generated!');
+  setStatus('', 'Ready');
+}
+
+// ── Slider State & Logic ──
+let currentSlide = 0;
+const totalSlides = 3;
+
+function moveSlide(direction) {
+  currentSlide += direction;
+  
+  // Prevent sliding out of bounds
+  if (currentSlide < 0) currentSlide = 0;
+  if (currentSlide >= totalSlides) currentSlide = totalSlides - 1;
+  
+  updateSliderUI();
+}
+
+function updateSliderUI() {
+  // 1. Move the track
+  const track = document.getElementById('sliderTrack');
+  track.style.transform = `translateX(-${currentSlide * 100}%)`;
+  
+  // 2. Update arrow states
+  document.getElementById('prevSlideBtn').disabled = currentSlide === 0;
+  document.getElementById('nextSlideBtn').disabled = currentSlide === totalSlides - 1;
+  
+  // 3. Update active dot
+  const dots = document.querySelectorAll('.dot');
+  dots.forEach((dot, index) => {
+    dot.classList.toggle('active', index === currentSlide);
+  });
+
+  // 4. Update the main action button
+  const actionBtn = document.getElementById('modalActionBtn');
+  if (currentSlide === totalSlides - 1) {
+    actionBtn.textContent = "Got it, let's go!";
+    actionBtn.classList.add('btn-primary');
+    actionBtn.classList.remove('btn-ghost');
+  } else {
+    actionBtn.textContent = "Next";
+    actionBtn.classList.add('btn-ghost');
+    actionBtn.classList.remove('btn-primary');
+  }
+}
+
+function handleModalAction() {
+  if (currentSlide === totalSlides - 1) {
+    closeUpdateModal();
+  } else {
+    moveSlide(1);
+  }
+}
+
+function closeUpdateModal() {
+  document.getElementById('updateModal').classList.remove('show');
+  localStorage.setItem('judgmentFormatterUpdated_v2', 'true');
+  
+  // Reset slider for next time (optional, but good practice)
+  setTimeout(() => {
+    currentSlide = 0;
+    updateSliderUI();
+  }, 300);
+}
+
+// ── Initialization & Event Listeners ──
 document.addEventListener("DOMContentLoaded", function() {
-    // This ensures all HTML and CSS is loaded before running
-    updateCount();
-    setStatus('', 'Ready');
+  updateCount();
+  setStatus('', 'Ready');
+
+  // 1. Trigger the Update Modal
+  // It checks localStorage. If 'judgmentFormatterUpdated_v1' is NOT found, it shows the modal.
+  if (!localStorage.getItem('judgmentFormatterUpdated_v2')) {
+    setTimeout(() => {
+      document.getElementById('updateModal').classList.add('show');
+    }, 600); // 600ms delay for a smooth entrance after the page loads
+  }
+
+  // 2. Multi-Table Paste Interceptor (Your Existing Code - Unchanged)
+  const richInput = document.getElementById('tableHtmlInput');
+  
+  if (richInput) {
+    richInput.addEventListener('paste', function(e) {
+      e.preventDefault();
+      
+      const clipboardHtml = e.clipboardData.getData('text/html');
+      const clipboardText = e.clipboardData.getData('text/plain');
+
+      if (clipboardHtml) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(clipboardHtml, 'text/html');
+        
+        // Grab ALL tables from the clipboard, not just the first one
+        const tables = doc.querySelectorAll('table');
+        
+        if (tables.length > 0) {
+          let combinedHtml = '';
+          
+          // Loop through every table MS Word created and stack them in the input
+          tables.forEach(table => {
+            combinedHtml += table.outerHTML + '<br>';
+          });
+          
+          this.innerHTML = combinedHtml;
+        } else {
+          this.innerText = clipboardText;
+        }
+      } else {
+        this.innerText = clipboardText;
+      }
+    });
+  }
 });
 </script>
 </body>
